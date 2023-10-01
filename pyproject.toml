@@ -1,0 +1,14 @@
+[tool.poetry]
+name = "mitblr-club-api"
+version = "0.0.1"
+description = "API to interface with the backend database containing information for operating the club ecosystem"
+authors = ["Alphaspiderman <68412330+Alphaspiderman@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
