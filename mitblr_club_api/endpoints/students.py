@@ -1,11 +1,9 @@
 from sanic.views import HTTPMethodView
-from sanic.response import HTTPResponse, text, json, BaseHTTPResponse
+from sanic.response import json, BaseHTTPResponse
 from sanic.request import Request
 from sanic.log import logger
 
-from app import appserver
-
-import typing
+from ..app import appserver
 
 
 class Students(HTTPMethodView):
@@ -26,7 +24,7 @@ class Students(HTTPMethodView):
         return json(d)
 
     # TODO - Data Validation
-    async def post(request: Request):
+    async def post(request: Request, uuid: int):
         """Create Student in DB"""
         collection = request.app.ctx.db["students"]
         doc = await collection.find_one(
@@ -35,7 +33,8 @@ class Students(HTTPMethodView):
 
         if doc is None:
             # Can create
-            pass
+            d = {"Status": "Work in Progress"}
+            return json(d)
 
         else:
             d = {"Error Code": "409", "Message": "Confict - Object already exists"}

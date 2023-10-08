@@ -1,9 +1,9 @@
 from sanic import Blueprint
 from sanic.views import HTTPMethodView
-from sanic.response import HTTPResponse, text, json
+from sanic.response import json
 from sanic.request import Request
 
-from app import appserver
+from ..app import appserver
 
 import typing
 
@@ -11,7 +11,7 @@ import typing
 class Events(HTTPMethodView):
     async def get(self, request: Request, slug: typing.Union[str, None]):
         """Getting all upcomming events / events by slug"""
-        if id == "":
+        if slug == "":
             # Return events in the next week
             pass
         else:
@@ -20,17 +20,15 @@ class Events(HTTPMethodView):
 
     # TODO - Data Validation
     # TODO - Authentication
-    async def post(self, request: Request, slug: typing.Union[str, None]):
+    async def post(self, request: Request):
         """Creation of Events"""
-        if id == "":
-            d = {"Code": "400", "Message": "Bad Request - Missing Data"}
-            return json(d, status=400)
+        ...
 
     # TODO - Authentication
     # TODO - Scope check (Club Core / Operations)
     async def patch(self, request: Request, slug: typing.Union[str, None]):
         """Updation of Event details / Status"""
-        if id == "":
+        if slug == "":
             d = {"Code": "400", "Message": "Bad Request - Missing Data"}
             return json(d, status=400)
 
@@ -38,7 +36,7 @@ class Events(HTTPMethodView):
     # TODO - Scope Check (Club Core)
     async def delete(self, request: Request, slug: typing.Union[str, None]):
         """Deletion of Events"""
-        if id == "":
+        if slug == "":
             d = {"Code": "400", "Message": "Bad Request - Missing Data"}
             return json(d, status=400)
 
@@ -52,26 +50,20 @@ class Events_Attend(HTTPMethodView):
     # TODO - Authentication
     async def post(self, request: Request, slug: str, reg_no: int):
         """Creation of Events"""
-        if id == "":
-            d = {"Code": "400", "Message": "Bad Request - Missing Data"}
-            return json(d, status=400)
+        ...
 
     # TODO - Data Validation
-    # TODO - Authentication 
+    # TODO - Authentication
     # TODO - Scope Check (Club Core / Operations Lead)
     async def patch(self, request: Request, slug: str, reg_no: int):
         """Updation of Event details / Status"""
-        if id == "":
-            d = {"Code": "400", "Message": "Bad Request - Missing Data"}
-            return json(d, status=400)
+        ...
 
-    # TODO - Authentication 
+    # TODO - Authentication
     # TODO - Scope Check (Operations Lead)
     async def delete(self, request: Request, slug: str, reg_no: int):
         """Deletion of Events"""
-        if id == "":
-            d = {"Code": "400", "Message": "Bad Request - Missing Data"}
-            return json(d, status=400)
+        ...
 
 
 appserver.add_route(Events.as_view(), "/events/<slug:strorempty>")
