@@ -362,8 +362,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /venv
-DATA/config.ADB.json
-DATA/config.ALH.json
 /.idea
-mitblr_club_api/.env
+*.env
+*.pem
 .vscode/settings.json

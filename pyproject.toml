@@ -11,6 +11,7 @@ sanic = {extras = ["ext"], version = "^23.6.0"}
 pydantic = "^2.4.2"
 motor = "^3.3.1"
 pyjwt = {extras = ["crypto"], version = "^2.8.0"}
+taskipy = "^1.12.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -18,6 +19,12 @@ flake8 = "^6.1.0"
 black = "^23.9.1"
 pre-commit = "^3.4.0"
 python-dotenv = "^1.0.0"
+
+[tool.taskipy.tasks]
+server = { cmd = "python -m mitblr_club_api.server", help = "Runs the API Server"}
+lint = { cmd = "pre-commit run --all-files", help = "Lints project" }
+precommit = { cmd = "pre-commit install", help = "Installs the pre-commit git hook" }
+format = { cmd = "black mitblr_club_api", help = "Runs the black python formatter" }
 
 [build-system]
 requires = ["poetry-core"]
