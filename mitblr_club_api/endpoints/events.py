@@ -1,12 +1,11 @@
-from sanic.views import HTTPMethodView
-from sanic.response import json
-from sanic.request import Request
-
-from ..app import appserver
-
 import typing
 
-from ..decorators.authorized import authorized_incls as authorized
+from sanic.request import Request
+from sanic.response import json
+from sanic.views import HTTPMethodView
+
+from mitblr_club_api.app import appserver
+from mitblr_club_api.decorators.authorized import authorized_incls
 
 
 class Events(HTTPMethodView):
@@ -20,14 +19,14 @@ class Events(HTTPMethodView):
             pass
 
     # TODO - Data Validation
-    @authorized
+    @authorized_incls
     async def post(self, request: Request):
         """Creation of Events"""
         ...
 
     # TODO - Authentication
     # TODO - Scope check (Club Core / Operations)
-    @authorized
+    @authorized_incls
     async def patch(self, request: Request, slug: typing.Union[str, None]):
         """Updation of Event details / Status"""
         if slug == "":
@@ -36,7 +35,7 @@ class Events(HTTPMethodView):
 
     # TODO - Authentication
     # TODO - Scope Check (Club Core)
-    @authorized
+    @authorized_incls
     async def delete(self, request: Request, slug: typing.Union[str, None]):
         """Deletion of Events"""
         if slug == "":
@@ -45,26 +44,26 @@ class Events(HTTPMethodView):
 
 
 class Events_Attend(HTTPMethodView):
-    @authorized
+    @authorized_incls
     async def get(self, request: Request, slug: str, reg_no: int):
         """Check if signed up for event"""
         ...
 
     # TODO - Data Validation
-    @authorized
+    @authorized_incls
     async def post(self, request: Request, slug: str, reg_no: int):
         """Mark Attendance of attendee"""
         ...
 
     # TODO - Data Validation
     # TODO - Scope Check (Club Core / Operations Lead)
-    @authorized
+    @authorized_incls
     async def patch(self, request: Request, slug: str, reg_no: int):
         """Update Attendance of attendee"""
         ...
 
     # TODO - Scope Check (Operations Lead)
-    @authorized
+    @authorized_incls
     async def delete(self, request: Request, slug: str, reg_no: int):
         """Deletion of Events"""
         ...

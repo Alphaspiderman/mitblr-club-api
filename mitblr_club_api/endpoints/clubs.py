@@ -1,10 +1,9 @@
-from sanic.views import HTTPMethodView
-from sanic.response import json
-from sanic.request import Request
-
-from ..app import appserver
-
 import typing
+
+from sanic.request import Request
+from sanic.views import HTTPMethodView
+
+from mitblr_club_api.app import appserver
 
 
 class Clubs(HTTPMethodView):

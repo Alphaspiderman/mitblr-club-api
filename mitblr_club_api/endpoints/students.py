@@ -1,18 +1,15 @@
-from sanic.views import HTTPMethodView
-from sanic.response import json
 from sanic.request import Request
-
-from ..app import appserver
-
+from sanic.response import json
+from sanic.views import HTTPMethodView
 from sanic_ext import validate
 
-from ..models.user import User
-
-from ..decorators.authorized import authorized_incls as authorized
+from mitblr_club_api.app import appserver
+from mitblr_club_api.decorators.authorized import authorized_incls
+from mitblr_club_api.models.user import User
 
 
 class Students(HTTPMethodView):
-    @authorized
+    @authorized_incls
     async def get(self, request: Request, uuid: int):
         """Check if Student Exists"""
         collection = request.app.ctx.db["students"]
@@ -27,7 +24,7 @@ class Students(HTTPMethodView):
 
         return json(d)
 
-    @authorized
+    @authorized_incls
     @validate(json=User)
     async def post(self, request: Request, uuid, body: User):
         """Create Student in DB"""
@@ -56,7 +53,7 @@ class Students(HTTPMethodView):
             return json(d, status=409)
 
     # TODO - Scope Check
-    @authorized
+    @authorized_incls
     async def patch(self, request: Request, uuid: str):
         ...
 

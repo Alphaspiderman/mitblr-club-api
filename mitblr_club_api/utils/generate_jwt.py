@@ -1,6 +1,7 @@
-from sanic import Sanic
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
+
 import jwt
+from sanic import Sanic
 
 
 async def generate_jwt(app: Sanic, data: dict, validity: int):

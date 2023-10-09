@@ -1,5 +1,5 @@
-from sanic import Request
 import jwt
+from sanic import Request
 
 
 async def check_request_for_authorization_status(request: Request):

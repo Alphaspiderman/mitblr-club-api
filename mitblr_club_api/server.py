@@ -1,21 +1,15 @@
-from sanic import Sanic
-from sanic.log import logger
+import bcrypt
 import motor.motor_asyncio as async_motor
 from dotenv import dotenv_values
-
-import bcrypt
-
-from sanic.views import HTTPMethodView
-from sanic import response, Request
+from sanic import Request, Sanic, response
+from sanic.log import logger
 from sanic_ext import validate
 
+from .app import appserver
 from .models.login_data import Login_Data
 from .utils.generate_jwt import generate_jwt
 
-from .app import appserver
-
 # flake8: noqa
-from .endpoints import clubs, events, students
 
 logger.debug("Loading ENV")
 config = dotenv_values(".env")
