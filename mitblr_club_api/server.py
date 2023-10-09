@@ -6,7 +6,7 @@ from sanic.log import logger
 from sanic_ext import validate
 
 from .app import appserver
-from .models.login_data import Login_Data
+from .models.login_data import LoginData
 from .utils.generate_jwt import generate_jwt
 
 # flake8: noqa
@@ -84,8 +84,8 @@ async def ping_test(request: Request):
 
 
 @app.post("/login")
-@validate(json=Login_Data)
-async def login(request: Request, body: Login_Data):
+@validate(json=LoginData)
+async def login(request: Request, body: LoginData):
     body = body.model_dump()
     if body["auth_type"] == "USER":
         user = body["identifier"]

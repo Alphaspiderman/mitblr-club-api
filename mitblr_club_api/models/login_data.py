@@ -1,9 +1,9 @@
 import typing
+from dataclasses import dataclass
 
-from pydantic import BaseModel
 
-
-class Login_Data(BaseModel):
+@dataclass(slots=True)
+class LoginData:
     auth_type: typing.Literal["USER", "AUTOMATION"]
     identifier: str
     secret: str

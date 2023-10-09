@@ -1,7 +1,8 @@
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 
-class User(BaseModel):
+@dataclass(frozen=True, slots=True)
+class User:
     application_number: int
     registration_number: int
     name: str
