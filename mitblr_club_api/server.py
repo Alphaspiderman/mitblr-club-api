@@ -5,11 +5,12 @@ from sanic import Request, Sanic, response
 from sanic.log import logger
 from sanic_ext import validate
 
+# noinspection PyUnresolvedReferences
+# flake8: noqa
+from mitblr_club_api.endpoints import clubs, events, students
 from .app import appserver
 from .models.login_data import LoginData
 from .utils.generate_jwt import generate_jwt
-
-# flake8: noqa
 
 logger.debug("Loading ENV")
 config = dotenv_values(".env")
