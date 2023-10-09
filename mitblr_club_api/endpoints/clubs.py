@@ -1,5 +1,5 @@
 from sanic.views import HTTPMethodView
-from sanic.response import HTTPResponse, text, json
+from sanic.response import json
 from sanic.request import Request
 
 from ..app import appserver
@@ -13,6 +13,7 @@ class Clubs(HTTPMethodView):
         collection = request.app.ctx.db["clubs"]
         if slug == "":
             # Get all clubs
+            # flake8: noqa
             doc = await collection.find({{}, {"coursename": 1}})
             pass
         else:

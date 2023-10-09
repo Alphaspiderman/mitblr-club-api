@@ -35,7 +35,7 @@ app.config.update(config)
 
 @app.listener("before_server_start")
 async def register_db(app: Sanic):
-    logger.info("Connnecting to MongoDB")
+    logger.info("Connecting to MongoDB")
     # Get Mongo Connection URL
     connection = app.config.get("MONGO_CONNECTION_URI", None)
     if connection is None:
@@ -50,26 +50,26 @@ async def register_db(app: Sanic):
         minPoolSize=10,
         # maximal pool size
         maxPoolSize=50,
-        # connection timeout in miliseconds
+        # connection timeout in milliseconds
         connectTimeoutMS=10000,
         # boolean
         retryWrites=True,
-        # wait queue in miliseconds
+        # wait queue in milliseconds
         waitQueueTimeoutMS=10000,
-        # in miliseconds
+        # in milliseconds
         serverSelectionTimeoutMS=10000,
     )
 
-    logger.info("Connnected to MongoDB")
+    logger.info("Connected to MongoDB")
 
-    # Check for DEV enviroment
+    # Check for DEV environment
     isprod = not app.config.get("ISDEV", True)
 
     if isprod == "True":
-        logger.info("Connnected to PRODUCTION")
+        logger.info("Connected to PRODUCTION")
         app.ctx.db = client["mitblr-club-api"]
     else:
-        logger.info("Connnected to DEV ENV")
+        logger.info("Connected to DEV ENV")
         app.ctx.db = client["mitblr-club-dev"]
 
 
@@ -123,7 +123,7 @@ async def login(request: Request, body: Login_Data):
             jwt = await generate_jwt(app=request.app, data=jwt_dat, validity=1440)
             d = {"identifier": jwt, "Authenticated": "True"}
         else:
-            d = {"identifier": user, "Authenticated": "False"}
+            d = {"identifier": app_id, "Authenticated": "False"}
 
         return response.json(d)
 

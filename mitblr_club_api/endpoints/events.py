@@ -1,4 +1,3 @@
-from sanic import Blueprint
 from sanic.views import HTTPMethodView
 from sanic.response import json
 from sanic.request import Request
@@ -7,10 +6,12 @@ from ..app import appserver
 
 import typing
 
+from ..decorators.authorized import authorized_incls as authorized
+
 
 class Events(HTTPMethodView):
     async def get(self, request: Request, slug: typing.Union[str, None]):
-        """Getting all upcomming events / events by slug"""
+        """Getting all upcoming events / events by slug"""
         if slug == "":
             # Return events in the next week
             pass
@@ -19,13 +20,14 @@ class Events(HTTPMethodView):
             pass
 
     # TODO - Data Validation
-    # TODO - Authentication
+    @authorized
     async def post(self, request: Request):
         """Creation of Events"""
         ...
 
     # TODO - Authentication
     # TODO - Scope check (Club Core / Operations)
+    @authorized
     async def patch(self, request: Request, slug: typing.Union[str, None]):
         """Updation of Event details / Status"""
         if slug == "":
@@ -34,6 +36,7 @@ class Events(HTTPMethodView):
 
     # TODO - Authentication
     # TODO - Scope Check (Club Core)
+    @authorized
     async def delete(self, request: Request, slug: typing.Union[str, None]):
         """Deletion of Events"""
         if slug == "":
@@ -42,25 +45,26 @@ class Events(HTTPMethodView):
 
 
 class Events_Attend(HTTPMethodView):
+    @authorized
     async def get(self, request: Request, slug: str, reg_no: int):
         """Check if signed up for event"""
         ...
 
     # TODO - Data Validation
-    # TODO - Authentication
+    @authorized
     async def post(self, request: Request, slug: str, reg_no: int):
-        """Creation of Events"""
+        """Mark Attendance of attendee"""
         ...
 
     # TODO - Data Validation
-    # TODO - Authentication
     # TODO - Scope Check (Club Core / Operations Lead)
+    @authorized
     async def patch(self, request: Request, slug: str, reg_no: int):
-        """Updation of Event details / Status"""
+        """Update Attendance of attendee"""
         ...
 
-    # TODO - Authentication
     # TODO - Scope Check (Operations Lead)
+    @authorized
     async def delete(self, request: Request, slug: str, reg_no: int):
         """Deletion of Events"""
         ...
