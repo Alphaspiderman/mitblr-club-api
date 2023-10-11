@@ -12,6 +12,10 @@ from .app import appserver
 from .models.login_data import LoginData
 from .utils.generate_jwt import generate_jwt
 
+from mitblr_club_api.decorators.authorized import authorized
+
+from mitblr_club_api.endpoints import students, clubs, events
+
 logger.debug("Loading ENV")
 config = dotenv_values(".env")
 

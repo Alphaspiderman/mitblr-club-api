@@ -1,9 +1,8 @@
-from dataclasses import dataclass
 from typing import Literal
+from pydantic import BaseModel
 
 
-@dataclass(slots=True)
-class LoginData:
+class LoginData(BaseModel):
     auth_type: Literal["USER", "AUTOMATION"]
     identifier: str
     secret: str
