@@ -10,6 +10,7 @@ from sanic.log import logger
 from mitblr_club_api.models.club_teams import ClubTeam
 from mitblr_club_api.utils.exceptions import ClubTeamNotFoundException
 
+# Maximum length of queries accepted.
 MAX_LENGTH: int = 100
 
 
