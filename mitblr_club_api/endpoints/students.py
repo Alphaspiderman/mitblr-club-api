@@ -3,9 +3,11 @@ from sanic.response import json
 from sanic.views import HTTPMethodView
 from sanic_ext import validate
 
+from bson import ObjectId
+
 from mitblr_club_api.app import appserver
 from mitblr_club_api.decorators.authorized import authorized_incls
-from mitblr_club_api.models.user import User
+from mitblr_club_api.models.students import Student_Create
 
 
 class Students(HTTPMethodView):
@@ -25,26 +27,33 @@ class Students(HTTPMethodView):
         return json(d)
 
     @authorized_incls
-    @validate(json=User)
-    async def post(self, request: Request, uuid, body: User):
+    @validate(json=Student_Create)
+    async def post(self, request: Request, body: Student_Create, uuid: str):
         """Create Student in DB"""
 
         collection = request.app.ctx.db["students"]
-        doc = await collection.find_one(
-            {"$or": [{"application_number": uuid}, {"registration_number": uuid}]}
-        )
+        doc = await collection.find_one({"application_number": body.application_number})
+
+        # parse each item in student['clubs'] and convert it into mongo object id
+        # for i in range(len(body.clubs)):
+        #     body.clubs[i] = ObjectId(body.clubs[i])
 
         if doc is None:
-            user = dict()
-            user["application_number"] = body.application_number
-            user["registration_number"] = body.registration_number
-            user["email"] = body.email
-            user["institution"] = body.institution
-            user["phone_number"] = body.phone_no
-            user["stay"] = {"mess": body.mess}.update(body.hostel)
-            user["academic"] = body.academic
-            user["name"] = body.name
-            result = await collection.insert_one(user)
+            student = dict()
+            student["application_number"] = body.application_number
+            student["email"] = body.email
+            student["institution"] = body.institution
+            student["academic"] = {
+                "stream": body.academic["stream"].value,
+                "year_pass": body.academic["year_pass"],
+            }
+            student["phone_number"] = body.phone_number
+            student["registration_number"] = body.registration_number
+            student["clubs"] = [ObjectId(oid=x) for x in body.clubs]
+            student["name"] = body.name
+            student["mess_provider"] = body.mess_provider.value
+
+            result = await collection.insert_one(student)
             d = {"Insert": "True", "ObjectId": str(result.inserted_id)}
             return json(d)
 
