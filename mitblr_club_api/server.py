@@ -5,15 +5,14 @@ from sanic import Request, Sanic, response
 from sanic.log import logger
 from sanic_ext import validate
 
-# noinspection PyUnresolvedReferences
-# flake8: noqa
-from mitblr_club_api.endpoints import clubs, events, students
 from .app import appserver
 from .models.login_data import LoginData
 from .utils.generate_jwt import generate_jwt
 
 from mitblr_club_api.decorators.authorized import authorized
 
+# noinspection PyUnresolvedReferences
+# flake8: noqa
 from mitblr_club_api.endpoints import students, clubs, events
 
 logger.debug("Loading ENV")
@@ -91,27 +90,30 @@ async def ping_test(request: Request):
 @app.post("/login")
 @validate(json=LoginData)
 async def login(request: Request, body: LoginData):
-    body = body.model_dump()
-    if body["auth_type"] == "USER":
-        user = body["identifier"]
-        passwd = body["secret"]
+    if body.auth_type == "USER":
+        user = body.identifier
+        password = body.secret
 
         collection = request.app.ctx.db["authentication"]
         doc = await collection.find_one({"auth_type": "USER", "username": user})
+        password_hash = doc["password_hash"]
 
-        if bcrypt.checkpw(passwd.encode(), doc["passwd_hash"].encode()):
-            # TODO - Add useful data
-            jwt_dat = {"username": user}
-            jwt = await generate_jwt(app=request.app, data=jwt_dat, validity=60)
+        if bcrypt.checkpw(password.encode(), password_hash.encode()):
+            jwt_dat = {
+                "auth_id": str(doc["_id"]),
+                "student_id": str(doc["student_id"]),
+                "team_id": str(doc["team_id"]),
+            }
+            jwt = await generate_jwt(app=request.app, data=jwt_dat, validity=90)
             d = {"identifier": jwt, "Authenticated": "True"}
         else:
             d = {"identifier": user, "Authenticated": "False"}
 
         return response.json(d)
 
-    if body["auth_type"] == "AUTOMATION":
-        app_id = body["identifier"]
-        token = body["secret"]
+    if body.auth_type == "AUTOMATION":
+        app_id = body.identifier
+        token = body.secret
 
         collection = request.app.ctx.db["authentication"]
         doc = await collection.find_one({"auth_type": "AUTOMATION", "app_id": app_id})
