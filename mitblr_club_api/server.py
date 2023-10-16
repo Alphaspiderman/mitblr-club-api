@@ -167,4 +167,10 @@ async def login(request: Request, body: LoginData):
 if __name__ == "__main__":
     isdev = app.config.get("ISDEV", True)
     isprod = not isdev
+    if isdev:
+        app.config["HOST"] = "DEV"
+    else:
+        if app.config.get("HOST", None) is None:
+            logger.error("MISSING HOST")
+            quit(1)
     app.run(debug=isdev, access_log=True, auto_reload=isdev)
