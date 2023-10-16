@@ -9,11 +9,11 @@ from .app import appserver
 from .models.login_data import LoginData
 from .utils.generate_jwt import generate_jwt
 
-from mitblr_club_api.decorators.authorized import authorized
-
 # noinspection PyUnresolvedReferences
 # flake8: noqa
-from mitblr_club_api.endpoints import students, clubs, events
+from mitblr_club_api.endpoints import clubs, events, students
+
+import jwt
 
 logger.debug("Loading ENV")
 config = dotenv_values(".env")
@@ -85,6 +85,41 @@ async def get_root(request: Request):
 @app.get("/ping")
 async def ping_test(request: Request):
     return response.text("Pong")
+
+
+@app.get("/jwt")
+async def jwt_status(request: Request):
+    if not request.token:
+        d = {"Authenticated": "False", "Message": "No Token"}
+        return response.json(d)
+
+    try:
+        jwt.decode(request.token, key=request.app.config["PUB_KEY"], algorithms="RS256")
+    except jwt.exceptions.ImmatureSignatureError:
+        # Raised when a token’s nbf claim represents a time in the future
+        d = {
+            "Authenticated": "False",
+            "Message": "JWT Token not allowed to be used at time",
+        }
+        status = 401
+    except jwt.exceptions.InvalidIssuedAtError:
+        # Raised when a token’s iat claim is in the future
+        d = {"Authenticated": "False", "Message": "JWT Token issues in future"}
+        status = 401
+    except jwt.exceptions.ExpiredSignatureError:
+        # Raised when a token’s exp claim indicates that it has expired
+        d = {"Authenticated": "False", "Message": "JWT Token is expired"}
+        status = 401
+    except jwt.exceptions.InvalidTokenError:
+        # Generic invalid token
+        d = {"Authenticated": "False", "Message": "JWT Token invalid"}
+        status = 401
+    else:
+        # Valid Token
+        d = {"Authenticated": "True", "Message": "JWT Token is valid"}
+        status = 200
+
+    return response.json(d, status=status)
 
 
 @app.post("/login")
