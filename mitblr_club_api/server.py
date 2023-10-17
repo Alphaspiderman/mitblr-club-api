@@ -5,16 +5,15 @@ from sanic import Request, Sanic, response
 from sanic.log import logger
 from sanic_ext import validate
 
-# noinspection PyUnresolvedReferences
-# flake8: noqa
-from mitblr_club_api.endpoints import clubs, events, students
 from .app import appserver
 from .models.login_data import LoginData
 from .utils.generate_jwt import generate_jwt
 
-from mitblr_club_api.decorators.authorized import authorized
+# noinspection PyUnresolvedReferences
+# flake8: noqa
+from mitblr_club_api.endpoints import clubs, events, students
 
-from mitblr_club_api.endpoints import students, clubs, events
+import jwt
 
 logger.debug("Loading ENV")
 config = dotenv_values(".env")
@@ -88,30 +87,68 @@ async def ping_test(request: Request):
     return response.text("Pong")
 
 
+@app.get("/jwt")
+async def jwt_status(request: Request):
+    if not request.token:
+        d = {"Authenticated": "False", "Message": "No Token"}
+        return response.json(d)
+
+    try:
+        jwt.decode(request.token, key=request.app.config["PUB_KEY"], algorithms="RS256")
+    except jwt.exceptions.ImmatureSignatureError:
+        # Raised when a token’s nbf claim represents a time in the future
+        d = {
+            "Authenticated": "False",
+            "Message": "JWT Token not allowed to be used at time",
+        }
+        status = 401
+    except jwt.exceptions.InvalidIssuedAtError:
+        # Raised when a token’s iat claim is in the future
+        d = {"Authenticated": "False", "Message": "JWT Token issues in future"}
+        status = 401
+    except jwt.exceptions.ExpiredSignatureError:
+        # Raised when a token’s exp claim indicates that it has expired
+        d = {"Authenticated": "False", "Message": "JWT Token is expired"}
+        status = 401
+    except jwt.exceptions.InvalidTokenError:
+        # Generic invalid token
+        d = {"Authenticated": "False", "Message": "JWT Token invalid"}
+        status = 401
+    else:
+        # Valid Token
+        d = {"Authenticated": "True", "Message": "JWT Token is valid"}
+        status = 200
+
+    return response.json(d, status=status)
+
+
 @app.post("/login")
 @validate(json=LoginData)
 async def login(request: Request, body: LoginData):
-    body = body.model_dump()
-    if body["auth_type"] == "USER":
-        user = body["identifier"]
-        passwd = body["secret"]
+    if body.auth_type == "USER":
+        user = body.identifier
+        password = body.secret
 
         collection = request.app.ctx.db["authentication"]
         doc = await collection.find_one({"auth_type": "USER", "username": user})
+        password_hash = doc["password_hash"]
 
-        if bcrypt.checkpw(passwd.encode(), doc["passwd_hash"].encode()):
-            # TODO - Add useful data
-            jwt_dat = {"username": user}
-            jwt = await generate_jwt(app=request.app, data=jwt_dat, validity=60)
+        if bcrypt.checkpw(password.encode(), password_hash.encode()):
+            jwt_dat = {
+                "auth_id": str(doc["_id"]),
+                "student_id": str(doc["student_id"]),
+                "team_id": str(doc["team_id"]),
+            }
+            jwt = await generate_jwt(app=request.app, data=jwt_dat, validity=90)
             d = {"identifier": jwt, "Authenticated": "True"}
         else:
             d = {"identifier": user, "Authenticated": "False"}
 
         return response.json(d)
 
-    if body["auth_type"] == "AUTOMATION":
-        app_id = body["identifier"]
-        token = body["secret"]
+    if body.auth_type == "AUTOMATION":
+        app_id = body.identifier
+        token = body.secret
 
         collection = request.app.ctx.db["authentication"]
         doc = await collection.find_one({"auth_type": "AUTOMATION", "app_id": app_id})
@@ -130,4 +167,10 @@ async def login(request: Request, body: LoginData):
 if __name__ == "__main__":
     isdev = app.config.get("ISDEV", True)
     isprod = not isdev
+    if isdev:
+        app.config["HOST"] = "DEV"
+    else:
+        if app.config.get("HOST", None) is None:
+            logger.error("MISSING HOST")
+            quit(1)
     app.run(debug=isdev, access_log=True, auto_reload=isdev)
