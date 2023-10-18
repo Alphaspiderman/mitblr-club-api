@@ -63,6 +63,8 @@ async def register_db(app: Sanic):
     # Check for DEV environment
     isprod = not app.config.get("ISDEV", True)
 
+    app.ctx.db_client = client
+
     if isprod == "True":
         logger.info("Connected to PRODUCTION")
         app.ctx.db = client["mitblr-club-api"]
@@ -73,7 +75,7 @@ async def register_db(app: Sanic):
 
 @app.listener("after_server_stop")
 async def close_connection(app: Sanic, loop):
-    app.ctx.db.close()
+    app.ctx.db_client.close()
     logger.info("Disconnected from MongoDB")
 
 
@@ -173,4 +175,4 @@ if __name__ == "__main__":
         if app.config.get("HOST", None) is None:
             logger.error("MISSING HOST")
             quit(1)
-    app.run(debug=isdev, access_log=True, auto_reload=isdev)
+    app.run(debug=isdev, access_log=True, auto_reload=isdev, host="0.0.0.0")
