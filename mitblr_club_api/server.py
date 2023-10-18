@@ -60,12 +60,12 @@ async def register_db(app: Sanic):
 
     logger.info("Connected to MongoDB")
 
-    # Check for DEV environment
-    isprod = not app.config.get("ISDEV", True)
+    # Add MongoDB connection client to ctx for use in other modules
+    app.ctx._db_client = client
 
-    app.ctx.db_client = client
-
-    if isprod == "True":
+    # Check for Production environment
+    isprod = app.config.get("IS_PROD", True)
+    if isprod:
         logger.info("Connected to PRODUCTION")
         app.ctx.db = client["mitblr-club-api"]
     else:
@@ -75,7 +75,7 @@ async def register_db(app: Sanic):
 
 @app.listener("after_server_stop")
 async def close_connection(app: Sanic, loop):
-    app.ctx.db_client.close()
+    app.ctx._db_client.close()
     logger.info("Disconnected from MongoDB")
 
 
@@ -167,12 +167,20 @@ async def login(request: Request, body: LoginData):
 
 
 if __name__ == "__main__":
-    isdev = app.config.get("ISDEV", True)
-    isprod = not isdev
-    if isdev:
-        app.config["HOST"] = "DEV"
-    else:
+    # Default to not being Production
+    isprod = app.config.get("IS_PROD", False)
+    # Use a KWARGS dict to pass to app.run dynamically
+    kwags = {"access_log": True, "host": "0.0.0.0"}
+    if isprod:
+        # If PROD, check for HOST (internally required for JWTs)
         if app.config.get("HOST", None) is None:
             logger.error("MISSING HOST")
             quit(1)
-    app.run(debug=isdev, access_log=True, auto_reload=isdev, host="0.0.0.0")
+    else:
+        # If DEV, set HOST to DEV
+        app.config["HOST"] = "DEV"
+        kwags["debug"] = True
+        kwags["auto_reload"] = True
+
+    # Run the API Server
+    app.run(**kwags)
