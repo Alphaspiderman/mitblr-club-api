@@ -29,3 +29,6 @@ class Club(BaseModel):
     operations: list[ObjectId]
     slug: str
     unit_type: Unit
+
+    class Config:
+        arbitrary_types_allowed = True

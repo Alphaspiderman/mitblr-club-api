@@ -17,3 +17,6 @@ class Event(BaseModel):
     name: str
     participants: dict[str, list[ObjectId]]
     slug: str
+
+    class Config:
+        arbitrary_types_allowed = True
