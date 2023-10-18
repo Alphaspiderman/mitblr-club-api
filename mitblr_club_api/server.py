@@ -61,14 +61,14 @@ async def register_db(app: Sanic):
     logger.info("Connected to MongoDB")
 
     # Check for DEV environment
-    isprod = not app.config.get("ISDEV", True)
+    is_dev = app.config.get("IS_DEV", True)
 
-    if isprod == "True":
-        logger.info("Connected to PRODUCTION")
-        app.ctx.db = client["mitblr-club-api"]
-    else:
+    if is_dev == "True":
         logger.info("Connected to DEV ENV")
         app.ctx.db = client["mitblr-club-dev"]
+    else:
+        logger.info("Connected to PRODUCTION")
+        app.ctx.db = client["mitblr-club-api"]
 
 
 @app.listener("after_server_stop")
@@ -165,12 +165,11 @@ async def login(request: Request, body: LoginData):
 
 
 if __name__ == "__main__":
-    isdev = app.config.get("ISDEV", True)
-    isprod = not isdev
-    if isdev:
+    is_dev = app.config.get("IS_DEV", True)
+    if is_dev:
         app.config["HOST"] = "DEV"
     else:
         if app.config.get("HOST", None) is None:
             logger.error("MISSING HOST")
             quit(1)
-    app.run(debug=isdev, access_log=True, auto_reload=isdev)
+    app.run(debug=is_dev, access_log=True, auto_reload=is_dev)
