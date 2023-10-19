@@ -23,6 +23,9 @@ pub = open("public-key.pem", "r")
 priv = open("private-key.pem", "r")
 config["PUB_KEY"] = pub.read()
 config["PRIV_KEY"] = priv.read()
+# Default to not being Production
+# Note that we deal with conversion of the string to bool in the __main__ block
+config["IS_PROD"] = config.get("IS_PROD", False)
 
 pub.close()
 priv.close()
@@ -64,7 +67,7 @@ async def register_db(app: Sanic):
     app.ctx._db_client = client
 
     # Check for Production environment
-    isprod = app.config.get("IS_PROD", True)
+    isprod = app.config["IS_PROD"]
     if isprod:
         logger.info("Connected to PRODUCTION")
         app.ctx.db = client["mitblr-club-api"]
@@ -167,8 +170,13 @@ async def login(request: Request, body: LoginData):
 
 
 if __name__ == "__main__":
-    # Default to not being Production
-    isprod = app.config.get("IS_PROD", False)
+    # Check for Production environment
+    isprod = app.config["IS_PROD"]
+    # Check if IS_PROD is a string (from .env) and convert to bool
+    if type(isprod) is str:
+        isprod = isprod.lower() == "true"
+        # Update the config with the bool
+        app.config["IS_PROD"] = isprod
     # Use a KWARGS dict to pass to app.run dynamically
     kwags = {"access_log": True, "host": "0.0.0.0"}
     if isprod:
