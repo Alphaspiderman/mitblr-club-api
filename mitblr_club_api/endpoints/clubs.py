@@ -8,7 +8,11 @@ from mitblr_club_api.app import appserver
 
 class Clubs(HTTPMethodView):
     async def get(self, request: Request, slug: Optional[str]):
-        """Get Club Info"""
+        """Retrieves club information.
+
+        This returns the relevant club information on being provided a slug. If no slug
+        is provided, a list of all clubs is returned.
+        """
         collection = request.app.ctx.db["clubs"]
         if slug == "":
             # Get all clubs
@@ -22,16 +26,16 @@ class Clubs(HTTPMethodView):
     # TODO - Data Validation
     # TODO - Authentication
     async def post(self, request: Request, slug: Optional[str]):
-        """Create Clubs"""
+        """Create Clubs."""
 
     # TODO - Data Validation
     # TODO - Authentication
     async def patch(self, request: Request, slug: Optional[str]):
-        """Update Club information"""
+        """Update Club information."""
 
     # TODO - Authentication
     async def delete(self, request: Request, slug: Optional[str]):
-        """Delete Club"""
+        """Delete Club."""
 
 
 appserver.add_route(Clubs.as_view(), "/clubs/<slug:strorempty>")

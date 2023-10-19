@@ -1,6 +1,4 @@
-"""
-Permission management and scoping for all classes.
-"""
+"""Permission management and scoping for all classes."""
 from enum import Enum
 
 from bson import ObjectId
@@ -15,9 +13,7 @@ MAX_LENGTH: int = 100
 
 
 class Permission(Enum):
-    """
-    All permissions within the database as enum strings and all permissions.
-    """
+    """All permissions within the database as enum strings and all permissions."""
 
     CREATE_EVENT = "create_event"
     MODIFY_EVENT = "modify_event"
@@ -31,8 +27,7 @@ class Permission(Enum):
 async def check_permission(
     collection: AsyncIOMotorCollection, student_id: ObjectId, permission: Permission
 ) -> bool:
-    """
-    Check the permissions given to a student within the club teams.
+    """Check the permissions given to a student within the club teams.
 
     Args:
         collection (AsyncIOMotorCollection): Database collection in which student ID is queried.
@@ -49,9 +44,7 @@ async def check_permission(
     club_teams = await collection.find({"student_id": student_id}).to_list(MAX_LENGTH)
 
     if len(club_teams) == 0:
-        raise ClubTeamNotFoundException(
-            f"No club team with the student id: {student_id} exists."
-        )
+        raise ClubTeamNotFoundException(f"No club team with the student id: {student_id} exists.")
 
     if len(club_teams) != 1:
         logger.warn(

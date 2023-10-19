@@ -19,9 +19,9 @@ class Events(HTTPMethodView):
             now = datetime.utcnow()
             start_date = now
             end_date = now + timedelta(days=7)
-            events = await collection.find(
-                {"date": {"$gte": start_date, "$lte": end_date}}
-            ).to_list(length=100)
+            events = await collection.find({"date": {"$gte": start_date, "$lte": end_date}}).to_list(
+                length=100
+            )
             if len(events) == 0:
                 return json({"Code": "404", "Message": "No Events Found"}, status=404)
             event_list = []
@@ -52,13 +52,13 @@ class Events(HTTPMethodView):
     # TODO - Data Validation
     @authorized_incls
     async def post(self, request: Request):
-        """Creation of Events"""
+        """Creation of Events."""
 
     # TODO - Authentication
     # TODO - Scope check (Club Core / Operations)
     @authorized_incls
     async def patch(self, request: Request, slug: Optional[str]):
-        """Updation of Event details / Status"""
+        """Updation of Event details / Status."""
         if slug == "":
             d = {"Code": "400", "Message": "Bad Request - Missing Data"}
             return json(d, status=400)
@@ -67,7 +67,7 @@ class Events(HTTPMethodView):
     # TODO - Scope Check (Club Core)
     @authorized_incls
     async def delete(self, request: Request, slug: Optional[str]):
-        """Deletion of Events"""
+        """Deletion of Events."""
         if slug == "":
             d = {"Code": "400", "Message": "Bad Request - Missing Data"}
             return json(d, status=400)
@@ -76,7 +76,7 @@ class Events(HTTPMethodView):
 class EventsAttend(HTTPMethodView):
     @authorized_incls
     async def get(self, request: Request, slug: str, reg_no: int):
-        """Check if signed up for event"""
+        """Check if signed up for event."""
         year = request.app.config["SORT_YEAR"]
 
         students = request.app.ctx.db["students"]
@@ -87,9 +87,7 @@ class EventsAttend(HTTPMethodView):
             return json({"Code": "404", "Message": "No Events Found"}, status=404)
         else:
             id = event["_id"]
-        student = await students.find_one(
-            {"registration_number": str(reg_no)}, {"events": 1}
-        )
+        student = await students.find_one({"registration_number": str(reg_no)}, {"events": 1})
         if not student:
             return json({"Code": "404", "Message": "No Student Found"}, status=404)
         else:
@@ -111,7 +109,7 @@ class EventsAttend(HTTPMethodView):
     # TODO - Data Validation
     @authorized_incls
     async def post(self, request: Request, slug: str, reg_no: int):
-        """Mark Attendance of attendee"""
+        """Mark Attendance of attendee."""
         students = request.app.ctx.db["students"]
         events = request.app.ctx.db["events"]
         event = await events.find_one({"slug": slug})
@@ -156,12 +154,12 @@ class EventsAttend(HTTPMethodView):
     # TODO - Scope Check (Club Core / Operations Lead)
     @authorized_incls
     async def patch(self, request: Request, slug: str, reg_no: int):
-        """Update Attendance of attendee"""
+        """Update Attendance of attendee."""
 
     # TODO - Scope Check (Operations Lead)
     @authorized_incls
     async def delete(self, request: Request, slug: str, reg_no: int):
-        """Deletion of Events"""
+        """Deletion of Events."""
 
 
 appserver.add_route(Events.as_view(), "/events/<slug:strorempty>")
