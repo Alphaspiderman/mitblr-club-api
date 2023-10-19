@@ -18,14 +18,23 @@ import jwt
 logger.debug("Loading ENV")
 config = dotenv_values(".env")
 
-
+# Read the public and private keys
 pub = open("public-key.pem", "r")
 priv = open("private-key.pem", "r")
+# Add the keys to the config
 config["PUB_KEY"] = pub.read()
 config["PRIV_KEY"] = priv.read()
-
+# Close the files
 pub.close()
 priv.close()
+
+# Try to get state from ENV, defaults to being dev
+isprod: str = config.get("IS_PROD", "false")
+# Convert the string to a bool
+isprod = isprod.lower() == "true"
+# Update the config with the bool
+config.update({"IS_PROD": isprod})
+# IS_PROD is now a bool in the config
 
 app: Sanic = appserver
 app.config.update(config)
@@ -35,7 +44,7 @@ app.config.update(config)
 async def register_db(app: Sanic):
     logger.info("Connecting to MongoDB")
     # Get Mongo Connection URL
-    connection = app.config.get("MONGO_CONNECTION_URI", None)
+    connection = app.config.get("MONGO_CONNECTION_URI")
     if connection is None:
         logger.error("Missing MongoDB URL")
         app.stop(terminate=True)
@@ -60,10 +69,12 @@ async def register_db(app: Sanic):
 
     logger.info("Connected to MongoDB")
 
-    # Check for DEV environment
-    isprod = not app.config.get("ISDEV", True)
+    # Add MongoDB connection client to ctx for use in other modules
+    app.ctx.db_client = client
 
-    if isprod == "True":
+    # Check for Production environment
+    isprod = app.config["IS_PROD"]
+    if isprod:
         logger.info("Connected to PRODUCTION")
         app.ctx.db = client["mitblr-club-api"]
     else:
@@ -73,7 +84,7 @@ async def register_db(app: Sanic):
 
 @app.listener("after_server_stop")
 async def close_connection(app: Sanic, loop):
-    app.ctx.db.close()
+    app.ctx.db_client.close()
     logger.info("Disconnected from MongoDB")
 
 
@@ -165,12 +176,20 @@ async def login(request: Request, body: LoginData):
 
 
 if __name__ == "__main__":
-    isdev = app.config.get("ISDEV", True)
-    isprod = not isdev
-    if isdev:
-        app.config["HOST"] = "DEV"
-    else:
-        if app.config.get("HOST", None) is None:
+    # Check for Production environment
+    isprod = app.config["IS_PROD"]
+    # Use a KWARGS dict to pass to app.run dynamically
+    kwargs = {"access_log": True, "host": "0.0.0.0"}
+    if isprod:
+        # If PROD, check for HOST (internally required for JWTs)
+        if app.config.get("HOST") is None:
             logger.error("MISSING HOST")
             quit(1)
-    app.run(debug=isdev, access_log=True, auto_reload=isdev)
+    else:
+        # If DEV, set HOST to DEV
+        app.config["HOST"] = "DEV"
+        kwargs["debug"] = True
+        kwargs["auto_reload"] = True
+
+    # Run the API Server
+    app.run(**kwargs)
