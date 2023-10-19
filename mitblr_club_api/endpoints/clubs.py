@@ -8,10 +8,11 @@ from mitblr_club_api.app import appserver
 
 class Clubs(HTTPMethodView):
     async def get(self, request: Request, slug: Optional[str]):
-        """Retrieves club information.
+        """Retrives club information.
 
-        This returns the relevant club information on being provided a slug. If no slug
-        is provided, a list of all clubs is returned.
+        Args:
+            request (Request): _description_
+            slug (Optional[str]): _description_
         """
         collection = request.app.ctx.db["clubs"]
         if slug == "":

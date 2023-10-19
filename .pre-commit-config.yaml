@@ -19,15 +19,15 @@ repos:
     rev: v1.7.1
     hooks:
       - id: docformatter
-        additional_dependencies: [tomli]
-        args: [--in-place, --config, ./pyproject.toml]
+        additional_dependencies: [ tomli ]
+        args: [ --in-place, --config, ./pyproject.toml ]
 
   - repo: local
     hooks:
       - id: black
         name: Black
         description: Formats the python source code using black.
-        args: [--line-length=110]
+        args: [ --line-length=110 ]
         language: system
         entry: poetry run task format
         require_serial: true
