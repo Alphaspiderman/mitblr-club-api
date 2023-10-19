@@ -1,3 +1,6 @@
+"""API endpoints for events and their attendance."""
+
+from datetime import datetime, timedelta
 from typing import Optional
 
 from sanic.request import Request
@@ -7,12 +10,26 @@ from sanic.views import HTTPMethodView
 from mitblr_club_api.app import appserver
 from mitblr_club_api.decorators.authorized import authorized_incls
 
-from datetime import datetime, timedelta
-
 
 class Events(HTTPMethodView):
+    """Endpoints regarding events."""
+
     async def get(self, request: Request, slug: Optional[str]):
-        """Getting all upcoming events / events by slug."""
+        """
+        Get a response with either all the events for the next week if there is no slug, or a particular event
+        referenced to by the slug.
+
+        :param request: Sanic request.
+        :type request: Request
+        :param slug: Slug for the event, or an empty string.
+        :type slug: str
+
+        :return: Returns JSON with either the event corresponding to the slug, or all the events for the
+                 next week if the slug is an empty string. JSON with code 404 if the event does not exist
+                 in either slug case.
+        :rtype: JSONResponse
+        """
+
         collection = request.app.ctx.db["events"]
         if slug == "":
             # Return events in the next week
@@ -74,9 +91,27 @@ class Events(HTTPMethodView):
 
 
 class EventsAttend(HTTPMethodView):
+    """Endpoints regarding event attendance."""
+
     @authorized_incls
     async def get(self, request: Request, slug: str, reg_no: int):
-        """Check if signed up for event"""
+        """
+        Get a response that given an event slug and student registration number, returns if the student is
+        signed up for that event or not.
+
+        :param request: Sanic request.
+        :type request: Request
+        :param slug: Slug for the event.
+        :type slug: str
+        :param reg_no: Registration number of the student.
+        :type reg_no: int
+
+        :return: JSON response with code 200 if the student is registered for the event. JSON response with
+                 code 404 if either the event, or the student is not found, or the student is not registered
+                 for the event.
+        :rtype: JSONResponse
+        """
+
         year = request.app.config["SORT_YEAR"]
 
         students = request.app.ctx.db["students"]
@@ -111,7 +146,22 @@ class EventsAttend(HTTPMethodView):
     # TODO - Data Validation
     @authorized_incls
     async def post(self, request: Request, slug: str, reg_no: int):
-        """Mark Attendance of attendee"""
+        """
+        Mark the attendance of an event attendee with an event slug and student registration number.
+
+        :param request: Sanic request.
+        :type request: Request
+        :param slug: Slug for the event.
+        :type slug: are
+        :param reg_no: Registration number of the student.
+        :type reg_no: int
+
+        :return: JSON response with code 200 if the student's attendance has been updated. JSON response
+                 with code 404 if either the event, or the student is not found, or the student's attendance
+                 could not be updated.
+        :rtype: JSONResponse
+        """
+
         students = request.app.ctx.db["students"]
         events = request.app.ctx.db["events"]
         event = await events.find_one({"slug": slug})

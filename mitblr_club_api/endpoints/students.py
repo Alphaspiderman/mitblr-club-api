@@ -1,9 +1,10 @@
+"""API endpoints for students."""
+
+from bson import ObjectId
 from sanic.request import Request
 from sanic.response import json
 from sanic.views import HTTPMethodView
 from sanic_ext import validate
-
-from bson import ObjectId
 
 from mitblr_club_api.app import appserver
 from mitblr_club_api.decorators.authorized import authorized_incls
@@ -11,9 +12,23 @@ from mitblr_club_api.models.students import Student_Create
 
 
 class Students(HTTPMethodView):
+    """Endpoints regarding students."""
+
     @authorized_incls
     async def get(self, request: Request, uuid: int):
-        """Check if Student Exists"""
+        """
+        Check if a student with given UUID exists in the database.
+
+        :param request: Sanic request.
+        :type request: Request
+        :param uuid: UUID, which can either be the student's application number, or their registration number.
+        :type uuid: int
+
+        :return: JSON with "exists" set to "False" if the student does not exist, else JSON with "exists"
+                 set to "True", and the student's registration number.
+        :rtype: JSONResponse
+        """
+
         collection = request.app.ctx.db["students"]
         doc = await collection.find_one(
             {"$or": [{"application_number": uuid}, {"registration_number": uuid}]}
@@ -29,7 +44,21 @@ class Students(HTTPMethodView):
     @authorized_incls
     @validate(json=Student_Create)
     async def post(self, request: Request, body: Student_Create, uuid: str):
-        """Create Student in DB"""
+        """
+        Create a student in the database using Python models.
+
+        :param request: Sanic request.
+        :type request: Request
+        :param body: Body that contains data as a `Student_Create` object.
+        :type body: Student_Create
+        :param uuid: UUID, which can either be the student's application number, or their registration number.
+        :type uuid: int
+
+        :return: JSON response with the student's Mongo ObjectId if the student was successfully added to
+                 the database. JSON response with code 409 if the student with the same application number
+                 already exists.
+        :rtype:
+        """
 
         collection = request.app.ctx.db["students"]
         doc = await collection.find_one({"application_number": body.application_number})
