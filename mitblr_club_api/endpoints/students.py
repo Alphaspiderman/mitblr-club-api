@@ -12,7 +12,7 @@ from mitblr_club_api.models.students import Student_Create
 
 class Students(HTTPMethodView):
     @authorized_incls
-    async def get(self, request: Request, uuid: int):
+    async def get(self, request: Request, uuid: int): 
         """Check if Student Exists"""
         collection = request.app.ctx.db["students"]
         doc = await collection.find_one(
@@ -34,9 +34,6 @@ class Students(HTTPMethodView):
         collection = request.app.ctx.db["students"]
         doc = await collection.find_one({"application_number": body.application_number})
 
-        # parse each item in student['clubs'] and convert it into mongo object id
-        # for i in range(len(body.clubs)):
-        #     body.clubs[i] = ObjectId(body.clubs[i])
 
         if doc is None:
             student = dict()
