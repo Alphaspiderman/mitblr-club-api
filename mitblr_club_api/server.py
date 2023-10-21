@@ -134,7 +134,7 @@ async def login(request: Request, body: LoginData):
         password_hash = doc.get("password_hash")
         # We are not sure if we are going to be omitting the password_hash field on the
         # document or setting the field as empty. So we check for both cases.
-        if password_hash is None or password_hash == "":
+        if password_hash is None or password_hash == b"":
             # Operations team password setup
             # Generate a hash for the password and store it in the database
             password_hash = bcrypt.hashpw(password.encode(), salt=bcrypt.gensalt())
@@ -148,7 +148,7 @@ async def login(request: Request, body: LoginData):
             verified = True
         else:
             # Verify password for exisitng users
-            verified = bcrypt.checkpw(password.encode(), password_hash.encode())
+            verified = bcrypt.checkpw(password.encode(), password_hash)
 
         # If verified, generate JWT
         if verified:
@@ -172,7 +172,7 @@ async def login(request: Request, body: LoginData):
         collection = request.app.ctx.db["authentication"]
         doc = await collection.find_one({"auth_type": "AUTOMATION", "app_id": app_id})
 
-        if bcrypt.checkpw(token.encode(), doc["token"].encode()):
+        if bcrypt.checkpw(token.encode(), doc["token"]):
             # TODO - Add useful data
             jwt_dat = {"username": app_id}
             jwt = await generate_jwt(app=request.app, data=jwt_dat, validity=1440)
