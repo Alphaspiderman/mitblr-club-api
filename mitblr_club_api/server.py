@@ -142,9 +142,27 @@ async def login(request: Request, body: LoginData):
 
         collection = request.app.ctx.db["authentication"]
         doc = await collection.find_one({"auth_type": "USER", "username": user})
-        password_hash = doc["password_hash"]
+        password_hash = doc.get("password_hash")
+        # We are not sure if we are going to be omitting the password_hash field on the
+        # document or setting the field as empty. So we check for both cases.
+        if password_hash is None or password_hash == b"":
+            # Operations team password setup
+            # Generate a hash for the password and store it in the database
+            password_hash = bcrypt.hashpw(password.encode(), salt=bcrypt.gensalt())
+            # Upsert password hash to MongoDB
+            await collection.update_one(
+                {"auth_type": "USER", "username": user},
+                {"$set": {"password_hash": password_hash}},
+                upsert=True,
+            )
+            # Set verified to True (only for first time login)
+            verified = True
+        else:
+            # Verify password for exisitng users
+            verified = bcrypt.checkpw(password.encode(), password_hash)
 
-        if bcrypt.checkpw(password.encode(), password_hash.encode()):
+        # If verified, generate JWT
+        if verified:
             jwt_dat = {
                 "auth_id": str(doc["_id"]),
                 "student_id": str(doc["student_id"]),
@@ -153,7 +171,8 @@ async def login(request: Request, body: LoginData):
             jwt = await generate_jwt(app=request.app, data=jwt_dat, validity=90)
             d = {"identifier": jwt, "Authenticated": "True"}
         else:
-            d = {"identifier": user, "Authenticated": "False"}
+            # If not verified, return False
+            d = {"Authenticated": "False"}
 
         return response.json(d)
 
@@ -164,7 +183,7 @@ async def login(request: Request, body: LoginData):
         collection = request.app.ctx.db["authentication"]
         doc = await collection.find_one({"auth_type": "AUTOMATION", "app_id": app_id})
 
-        if bcrypt.checkpw(token.encode(), doc["token"].encode()):
+        if bcrypt.checkpw(token.encode(), doc["token"]):
             # TODO - Add useful data
             jwt_dat = {"username": app_id}
             jwt = await generate_jwt(app=request.app, data=jwt_dat, validity=1440)
