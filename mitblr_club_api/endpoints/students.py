@@ -8,7 +8,6 @@ from sanic.response import JSONResponse, json
 from sanic.views import HTTPMethodView
 from sanic_ext import validate
 
-from mitblr_club_api.app import appserver
 from mitblr_club_api.decorators.authorized import authorized_incls
 from mitblr_club_api.models.students import Student_Create
 
@@ -103,6 +102,3 @@ class Students(HTTPMethodView):
     @authorized_incls
     async def patch(self, request: Request, uuid: str):
         ...
-
-
-appserver.add_route(Students.as_view(), "/students/<uuid:strorempty>")

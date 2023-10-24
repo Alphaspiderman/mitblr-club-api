@@ -11,7 +11,7 @@ from .utils.generate_jwt import generate_jwt
 
 # noinspection PyUnresolvedReferences
 # flake8: noqa
-from mitblr_club_api.endpoints import clubs, events, students
+import mitblr_club_api.endpoints
 
 import jwt
 

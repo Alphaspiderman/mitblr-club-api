@@ -1,15 +1,11 @@
 from typing import Optional
 
-from sanic.request import Request
+from sanic import Request, json
 from sanic.views import HTTPMethodView
-from sanic.response import json
 from sanic_ext import validate
 
-
-from mitblr_club_api.app import appserver
-
-from mitblr_club_api.models.clubs import Club_Create
 from mitblr_club_api.decorators.authorized import authorized_incls
+from mitblr_club_api.models.clubs import Club_Create
 
 
 class Clubs(HTTPMethodView):
@@ -19,7 +15,6 @@ class Clubs(HTTPMethodView):
         collection = request.app.ctx.db["clubs"]
         if slug == "":
             # Get all clubs
-            # flake8: noqa
             docs = await collection.find({}).to_list(length=100)
 
             if docs is None:
@@ -99,6 +94,3 @@ class Clubs(HTTPMethodView):
     # TODO - Authentication
     async def delete(self, request: Request, slug: Optional[str]):
         """Delete Club"""
-
-
-appserver.add_route(Clubs.as_view(), "/clubs/<slug:strorempty>")
