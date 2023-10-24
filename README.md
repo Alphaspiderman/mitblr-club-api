@@ -26,7 +26,7 @@ cd mitblr-club-api
 
 ### Install Dependencies
 
-Install Poetry if you haven't already 
+Install Poetry if you haven't already
 
 ```bash
 pip install poetry
@@ -58,7 +58,7 @@ Make sure to set the following environment variables in your `.env` file:
 - `HOST`: Used to add information about where the JWT was issued from, in case of multiple API instances.
 ## Deployment (Production)
 
-The following section is only for reference for those interested in learning about the process. 
+The following section is only for reference for those interested in learning about the process.
 
 To deploy this project to production, follow these steps:
 

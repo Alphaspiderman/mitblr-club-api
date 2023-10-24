@@ -33,6 +33,7 @@ class Club(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
+
 class Club_Create(BaseModel):
     faculty_advisors: list[dict[str, str]]
     institution: str
@@ -42,4 +43,3 @@ class Club_Create(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
-        
