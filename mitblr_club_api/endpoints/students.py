@@ -42,7 +42,7 @@ class Students(HTTPMethodView):
         else:
             data = {
                 "exists": "True",
-                "registration_number": student["registration_number"],
+                "uuid": student["application_number"],
             }
 
         return json(data)

@@ -13,7 +13,7 @@ from mitblr_club_api.decorators.authorized import authorized_incls
 class Events(HTTPMethodView):
     """Endpoints regarding events."""
 
-    async def get(self, request: Request, slug: str) -> JSONResponse:
+    async def get(self, request: Request, event_slug: str) -> JSONResponse:
         """
         Get a response with either all the events for the next week if there is no slug, or a particular event
         referenced to by the slug.
@@ -31,7 +31,7 @@ class Events(HTTPMethodView):
 
         collection = request.app.ctx.db["events"]
 
-        if slug == "":
+        if event_slug == "":
             # Slug is empty, return the events in the next week.
             start_date = datetime.utcnow()
             end_date = start_date + timedelta(days=7)
@@ -56,7 +56,7 @@ class Events(HTTPMethodView):
 
         else:
             # Return event info based on the slug.
-            event = await collection.find_one({"slug": slug})
+            event = await collection.find_one({"slug": event_slug})
 
             if not event:
                 return json({"Code": "404", "Message": "No Events Found"}, status=404)
@@ -77,17 +77,17 @@ class Events(HTTPMethodView):
     # TODO - Authentication
     # TODO - Scope check (Club Core / Operations)
     @authorized_incls
-    async def patch(self, request: Request, slug: Optional[str]):
+    async def patch(self, request: Request, event_slug: Optional[str]):
         """Updation of Event details / Status"""
-        if slug == "":
+        if event_slug == "":
             d = {"Code": "400", "Message": "Bad Request - Missing Data"}
             return json(d, status=400)
 
     # TODO - Authentication
     # TODO - Scope Check (Club Core)
     @authorized_incls
-    async def delete(self, request: Request, slug: Optional[str]):
+    async def delete(self, request: Request, event_slug: Optional[str]):
         """Deletion of Events"""
-        if slug == "":
+        if event_slug == "":
             d = {"Code": "400", "Message": "Bad Request - Missing Data"}
             return json(d, status=400)

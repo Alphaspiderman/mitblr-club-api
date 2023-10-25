@@ -10,7 +10,7 @@ class Events_Attend(HTTPMethodView):
     """Endpoints regarding event attendance."""
 
     @authorized_incls
-    async def get(self, request: Request, slug: str, reg_no: int) -> JSONResponse:
+    async def get(self, request: Request, slug: str, uuid: int) -> JSONResponse:
         """
         Get a response that given an event slug and student registration number, returns if the student is
         signed up for that event or not.
@@ -39,7 +39,7 @@ class Events_Attend(HTTPMethodView):
             return json({"Code": "404", "Message": "No Events Found"}, status=404)
 
         student = await students.find_one(
-            {"registration_number": str(reg_no)}, {"events": 1}
+            {"application_number": str(uuid)}, {"events": 1}
         )
 
         if not student:
@@ -58,7 +58,7 @@ class Events_Attend(HTTPMethodView):
 
     # TODO: Data validation.
     @authorized_incls
-    async def post(self, request: Request, slug: str, reg_no: int) -> JSONResponse:
+    async def post(self, request: Request, slug: str, uuid: int) -> JSONResponse:
         """
         Mark the attendance of an event attendee with an event slug and student registration number.
 
@@ -82,7 +82,7 @@ class Events_Attend(HTTPMethodView):
         if not event:
             return json({"Code": "404", "Message": "No Events Found"}, status=404)
 
-        student = await students.find_one({"registration_number": str(reg_no)})
+        student = await students.find_one({"application_number": str(uuid)})
 
         if not student:
             return json({"Code": "404", "Message": "No Student Found"}, status=404)
@@ -93,7 +93,7 @@ class Events_Attend(HTTPMethodView):
             if event["event_id"] == event_id:
                 # Match the specific event_id within the events array.
                 query = {
-                    "registration_number": str(reg_no),
+                    "application_number": str(uuid),
                     "events.event_id": event_id,
                 }
 
@@ -118,10 +118,10 @@ class Events_Attend(HTTPMethodView):
     # TODO - Data Validation
     # TODO - Scope Check (Club Core / Operations Lead)
     @authorized_incls
-    async def patch(self, request: Request, slug: str, reg_no: int):
+    async def patch(self, request: Request, slug: str, uuid: int):
         """Update Attendance of attendee"""
 
     # TODO - Scope Check (Operations Lead)
     @authorized_incls
-    async def delete(self, request: Request, slug: str, reg_no: int):
+    async def delete(self, request: Request, slug: str, uuid: int):
         """Deletion of Events"""

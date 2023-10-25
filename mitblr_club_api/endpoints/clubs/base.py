@@ -10,10 +10,10 @@ from mitblr_club_api.models.clubs import Club_Create
 
 class Clubs(HTTPMethodView):
     @authorized_incls
-    async def get(self, request: Request, slug: Optional[str]):
+    async def get(self, request: Request, club_slug: Optional[str]):
         """Get Club Info"""
         collection = request.app.ctx.db["clubs"]
-        if slug == "":
+        if club_slug == "":
             # Get all clubs
             docs = await collection.find({}).to_list(length=100)
 
@@ -35,7 +35,7 @@ class Clubs(HTTPMethodView):
 
         else:
             # Get specific club
-            doc = await collection.find_one({"slug": slug})
+            doc = await collection.find_one({"slug": club_slug})
             if not doc:
                 return json({"Code": "404", "Message": "No Clubs Found"}, status=404)
             else:
@@ -53,7 +53,7 @@ class Clubs(HTTPMethodView):
 
     @authorized_incls
     @validate(json=Club_Create)
-    async def post(self, request: Request, body: Club_Create, slug: Optional[str]):
+    async def post(self, request: Request, body: Club_Create, club_slug: Optional[str]):
         """Create Clubs"""
         collection = request.app.ctx.db["clubs"]
         doc = await collection.find_one({"slug": body.slug})
@@ -88,9 +88,9 @@ class Clubs(HTTPMethodView):
 
     # TODO - Data Validation
     # TODO - Authentication
-    async def patch(self, request: Request, slug: Optional[str]):
+    async def patch(self, request: Request, club_slug: Optional[str]):
         """Update Club information"""
 
     # TODO - Authentication
-    async def delete(self, request: Request, slug: Optional[str]):
+    async def delete(self, request: Request, club_slug: Optional[str]):
         """Delete Club"""
