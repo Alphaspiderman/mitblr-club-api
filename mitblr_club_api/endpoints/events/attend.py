@@ -19,8 +19,8 @@ class Events_Attend(HTTPMethodView):
         :type request: Request
         :param slug: Slug for the event.
         :type slug: str
-        :param reg_no: Registration number of the student.
-        :type reg_no: int
+        :param uuid: Registration number of the student.
+        :type uuid: int
 
         :return: JSON response with code 200 if the student is registered for the event. JSON response with
                  code 404 if either the event, or the student is not found, or the student is not registered
@@ -36,23 +36,33 @@ class Events_Attend(HTTPMethodView):
         event = await events.find_one({"slug": slug, "sort_year": year})
 
         if not event:
-            return json({"Code": "404", "Message": "No Events Found"}, status=404)
+            return json(
+                {"status": 404, "error": "Not Found", "message": "No Events Found"},
+                status=404,
+            )
 
         student = await students.find_one(
             {"application_number": str(uuid)}, {"events": 1}
         )
 
         if not student:
-            return json({"Code": "404", "Message": "No Student Found"}, status=404)
+            return json(
+                {"status": 404, "error": "Not Found", "message": "No Student Found"},
+                status=404,
+            )
 
         for student_event in student["events"]:
             if student_event["event_id"] == event["_id"]:
                 return json(
-                    {"Code": "200", "Message": "Student is registered for the event"}
+                    {"status": 200, "message": "Student is registered for the event"}
                 )
 
         return json(
-            {"Code": "404", "Message": "Student is not registered for the event"},
+            {
+                "status": 404,
+                "error": "Not Found",
+                "message": "Student is not registered for the event",
+            },
             status=404,
         )
 
@@ -80,12 +90,19 @@ class Events_Attend(HTTPMethodView):
 
         event = await events.find_one({"slug": slug})
         if not event:
-            return json({"Code": "404", "Message": "No Events Found"}, status=404)
+            return json(
+                {"status": 404, "error": "Not Found", "message": "No Events Found"},
+                status=404,
+            )
 
+        # TODO - Timed Cache
         student = await students.find_one({"application_number": str(uuid)})
 
         if not student:
-            return json({"Code": "404", "Message": "No Student Found"}, status=404)
+            return json(
+                {"status": 404, "error": "Not Found", "message": "No student found"},
+                status=404,
+            )
 
         event_id = event["_id"]
 
@@ -102,7 +119,7 @@ class Events_Attend(HTTPMethodView):
 
                 await students.update_one(query, update)
                 return json(
-                    {"Code": "200", "Message": "Student attendance has been updated"}
+                    {"status": 200, "message": "Student attendance has been updated"}
                 )
 
             # TODO: Update on event object in the events collection.
@@ -111,7 +128,7 @@ class Events_Attend(HTTPMethodView):
                 pass
 
         return json(
-            {"Code": "404", "Message": "Update Failed"},
+            {"status": 404, "error": "Not Found", "message": "Update failed"},
             status=404,
         )
 

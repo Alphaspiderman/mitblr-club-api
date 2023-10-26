@@ -18,7 +18,7 @@ class Clubs(HTTPMethodView):
             docs = await collection.find({}).to_list(length=100)
 
             if docs is None:
-                return json({"Code": "404", "Message": "No Clubs Found"}, status=404)
+                return json({"status": 404, "message": "No clubs found"}, status=404)
             else:
                 club_list = []
                 for doc in docs:
@@ -37,7 +37,10 @@ class Clubs(HTTPMethodView):
             # Get specific club
             doc = await collection.find_one({"slug": club_slug})
             if not doc:
-                return json({"Code": "404", "Message": "No Clubs Found"}, status=404)
+                return json(
+                    {"status": 404, "error": "Not Found", "message": "No clubs found"},
+                    status=404,
+                )
             else:
                 return json(
                     {
@@ -47,9 +50,6 @@ class Clubs(HTTPMethodView):
                         "institution": doc["institution"],
                     }
                 )
-
-    # TODO - Data Validation
-    # TODO - Authentication
 
     @authorized_incls
     @validate(json=Club_Create)
@@ -62,7 +62,7 @@ class Clubs(HTTPMethodView):
         faculty_advisors = list()
         for faculty in body.faculty_advisors:
             if ("name" not in faculty) or ("email" not in faculty):
-                d = {"Error Code": "500", "Message": "All required fields not present"}
+                d = {"status": 500, "message": "All required fields not present"}
                 return json(d, status=500)
             faculty_advisors.append(
                 {"name": faculty["name"], "email": faculty["email"]}
@@ -83,7 +83,7 @@ class Clubs(HTTPMethodView):
             return json(d)
 
         else:
-            d = {"Error Code": "409", "Message": "Conflict - Object already exists"}
+            d = {"status": 409, "error": "Conflict", "message": "Object already exists"}
             return json(d, status=409)
 
     # TODO - Data Validation

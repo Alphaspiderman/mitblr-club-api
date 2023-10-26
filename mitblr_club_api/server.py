@@ -101,7 +101,7 @@ async def ping_test(request: Request):
 @app.get("/jwt")
 async def jwt_status(request: Request):
     if not request.token:
-        d = {"Authenticated": "False", "Message": "No Token"}
+        d = {"authenticated": False, "message": "No token"}
         return response.json(d)
 
     try:
@@ -109,25 +109,25 @@ async def jwt_status(request: Request):
     except jwt.exceptions.ImmatureSignatureError:
         # Raised when a token’s nbf claim represents a time in the future
         d = {
-            "Authenticated": "False",
-            "Message": "JWT Token not allowed to be used at time",
+            "authenticated": False,
+            "message": "JWT Token not allowed to be used at time",
         }
         status = 401
     except jwt.exceptions.InvalidIssuedAtError:
         # Raised when a token’s iat claim is in the future
-        d = {"Authenticated": "False", "Message": "JWT Token issues in future"}
+        d = {"authenticated": False, "message": "JWT issues in future"}
         status = 401
     except jwt.exceptions.ExpiredSignatureError:
         # Raised when a token’s exp claim indicates that it has expired
-        d = {"Authenticated": "False", "Message": "JWT Token is expired"}
+        d = {"authenticated": False, "message": "JWT has expired"}
         status = 401
     except jwt.exceptions.InvalidTokenError:
         # Generic invalid token
-        d = {"Authenticated": "False", "Message": "JWT Token invalid"}
+        d = {"authenticated": False, "message": "JWT invalid"}
         status = 401
     else:
         # Valid Token
-        d = {"Authenticated": "True", "Message": "JWT Token is valid"}
+        d = {"authenticated": True, "message": "JWT is valid"}
         status = 200
 
     return response.json(d, status=status)
@@ -169,10 +169,10 @@ async def login(request: Request, body: LoginData):
                 "team_id": str(doc["team_id"]),
             }
             jwt = await generate_jwt(app=request.app, data=jwt_dat, validity=90)
-            d = {"identifier": jwt, "Authenticated": "True"}
+            d = {"identifier": jwt, "authenticated": True}
         else:
             # If not verified, return False
-            d = {"Authenticated": "False"}
+            d = {"authenticated": False}
 
         return response.json(d)
 
@@ -187,9 +187,9 @@ async def login(request: Request, body: LoginData):
             # TODO - Add useful data
             jwt_dat = {"username": app_id}
             jwt = await generate_jwt(app=request.app, data=jwt_dat, validity=1440)
-            d = {"identifier": jwt, "Authenticated": "True"}
+            d = {"identifier": jwt, "authenticated": True}
         else:
-            d = {"identifier": app_id, "Authenticated": "False"}
+            d = {"identifier": app_id, "authenticated": False}
 
         return response.json(d)
 

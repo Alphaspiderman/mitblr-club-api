@@ -6,6 +6,8 @@ from .students import Students
 
 # Clubs
 from .clubs.base import Clubs
+from .clubs.core import Clubs_Core
+from .clubs.events import Club_Events
 
 # Events
 from .events.base import Events
@@ -20,6 +22,14 @@ appserver.add_route(
 # Add Routes for Clubs
 appserver.add_route(
     Clubs.as_view(), "/clubs/<club_slug:strorempty>", strict_slashes=False
+)
+appserver.add_route(
+    Clubs_Core.as_view(), "/clubs/<club_slug:str>/core", strict_slashes=False
+)
+appserver.add_route(
+    Club_Events.as_view(),
+    "/clubs/<club_slug:str>/events/<event_slug:strorempty>",
+    strict_slashes=False,
 )
 
 # Add Routes for Events

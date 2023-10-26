@@ -1,13 +1,9 @@
 """API endpoints for events"""
-from typing import Optional
-
 from datetime import datetime, timedelta
 
 from sanic.request import Request
 from sanic.response import JSONResponse, json
 from sanic.views import HTTPMethodView
-
-from mitblr_club_api.decorators.authorized import authorized_incls
 
 
 class Events(HTTPMethodView):
@@ -20,13 +16,17 @@ class Events(HTTPMethodView):
 
         :param request: Sanic request.
         :type request: Request
-        :param slug: Slug for the event, or an empty string.
-        :type slug: str
+        :param event_slug: Slug for the event, or an empty string.
+        :type event_slug: str
 
         :return: Returns JSON with either the event corresponding to the slug, or all the events for the
                  next week if the slug is an empty string. JSON with code 404 if the event does not exist
                  in either slug case.
         :rtype: JSONResponse
+
+        Args:
+            request:
+            event_slug:
         """
 
         collection = request.app.ctx.db["events"]
@@ -41,7 +41,10 @@ class Events(HTTPMethodView):
             ).to_list(length=100)
 
             if len(events) == 0:
-                return json({"Code": "404", "Message": "No Events Found"}, status=404)
+                return json(
+                    {"status": 404, "error": "Not Found", "message": "No Events Found"},
+                    status=404,
+                )
 
             return json(
                 [
@@ -59,7 +62,10 @@ class Events(HTTPMethodView):
             event = await collection.find_one({"slug": event_slug})
 
             if not event:
-                return json({"Code": "404", "Message": "No Events Found"}, status=404)
+                return json(
+                    {"status": 404, "error": "Not Found", "message": "No events found"},
+                    status=404,
+                )
 
             return json(
                 {
@@ -68,26 +74,3 @@ class Events(HTTPMethodView):
                     "club": event["club"],
                 }
             )
-
-    # TODO - Data Validation
-    @authorized_incls
-    async def post(self, request: Request):
-        """Creation of Events"""
-
-    # TODO - Authentication
-    # TODO - Scope check (Club Core / Operations)
-    @authorized_incls
-    async def patch(self, request: Request, event_slug: Optional[str]):
-        """Updation of Event details / Status"""
-        if event_slug == "":
-            d = {"Code": "400", "Message": "Bad Request - Missing Data"}
-            return json(d, status=400)
-
-    # TODO - Authentication
-    # TODO - Scope Check (Club Core)
-    @authorized_incls
-    async def delete(self, request: Request, event_slug: Optional[str]):
-        """Deletion of Events"""
-        if event_slug == "":
-            d = {"Code": "400", "Message": "Bad Request - Missing Data"}
-            return json(d, status=400)

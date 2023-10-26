@@ -41,7 +41,7 @@ class Students(HTTPMethodView):
             data = {"exists": "False"}
         else:
             data = {
-                "exists": "True",
+                "exists": True,
                 "uuid": student["application_number"],
             }
 
@@ -75,7 +75,11 @@ class Students(HTTPMethodView):
         )
 
         if student is not None:
-            data = {"Error Code": "409", "Message": "Conflict - Object already exists"}
+            data = {
+                "status": 409,
+                "error": "Conflict",
+                "message": "Object already exists",
+            }
             return json(data, status=409)
 
         student: dict[str, Any] = {
@@ -94,7 +98,7 @@ class Students(HTTPMethodView):
         }
 
         result = await collection.insert_one(student)
-        data = {"Insert": "True", "ObjectId": str(result.inserted_id)}
+        data = {"status": 200, "ObjectId": str(result.inserted_id)}
 
         return json(data)
 
