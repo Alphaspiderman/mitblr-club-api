@@ -1,17 +1,14 @@
-from bson import ObjectId
 from pydantic import BaseModel
 
 from mitblr_club_api.models.enums.course import Course
 from mitblr_club_api.models.enums.mess_provider import MessProvider
 
 
-class Student(BaseModel):
-    _id: ObjectId
+class Student_Create(BaseModel):
     academic: dict[str, Course | int]
     application_number: int
-    clubs: list[ObjectId]
+    clubs: list[str]
     email: str
-    events: dict[str, ObjectId]
     institution: str
     mess_provider: MessProvider
     name: str
