@@ -136,12 +136,21 @@ async def jwt_status(request: Request):
 @app.post("/login")
 @validate(json=Login)
 async def login(request: Request, body: Login):
+    status = 200
     if body.auth_type == "USER":
         user = body.identifier
         password = body.secret
 
         collection = request.app.ctx.db["authentication"]
         doc = await collection.find_one({"auth_type": "USER", "username": user})
+        # Check if user exists
+        if doc is None:
+            d = {
+                "authenticated": False,
+                "message": "User not found",
+                "error": "Not Found",
+            }
+            return response.json(d, status=404)
         password_hash = doc.get("password_hash")
         # We are not sure if we are going to be omitting the password_hash field on the
         # document or setting the field as empty. So we check for both cases.
@@ -171,10 +180,15 @@ async def login(request: Request, body: Login):
             jwt = await generate_jwt(app=request.app, data=jwt_dat, validity=90)
             d = {"identifier": jwt, "authenticated": True}
         else:
-            # If not verified, return False
-            d = {"authenticated": False}
+            # If not verified, return error
+            d = {
+                "authenticated": False,
+                "message": "Incorrect password",
+                "error": "Unauthorized",
+            }
+            status = 401
 
-        return response.json(d)
+        return response.json(d, status=status)
 
     if body.auth_type == "AUTOMATION":
         app_id = body.identifier
