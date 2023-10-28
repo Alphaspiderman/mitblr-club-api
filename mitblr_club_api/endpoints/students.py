@@ -9,7 +9,7 @@ from sanic.views import HTTPMethodView
 from sanic_ext import validate
 
 from mitblr_club_api.decorators.authorized import authorized_incls
-from mitblr_club_api.models.students import Student_Create
+from mitblr_club_api.models.request.student import Student_Request
 
 
 class Students(HTTPMethodView):
@@ -48,9 +48,9 @@ class Students(HTTPMethodView):
         return json(data)
 
     @authorized_incls
-    @validate(json=Student_Create)
+    @validate(json=Student_Request)
     async def post(
-        self, request: Request, body: Student_Create, uuid: str
+        self, request: Request, body: Student_Request, uuid: str
     ) -> JSONResponse:
         """
         Create a student in the database using Python models.

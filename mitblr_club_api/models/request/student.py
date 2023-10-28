@@ -4,7 +4,7 @@ from mitblr_club_api.models.enums.course import Course
 from mitblr_club_api.models.enums.mess_provider import MessProvider
 
 
-class Student_Create(BaseModel):
+class Student_Request(BaseModel):
     academic: dict[str, Course | int]
     application_number: int
     clubs: list[str]

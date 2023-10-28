@@ -7,8 +7,8 @@ from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorCollection
 from sanic.log import logger
 
-from mitblr_club_api.models.club_teams import ClubTeam
-from mitblr_club_api.utils.exceptions import ClubTeamNotFoundException
+from mitblr_club_api.models.internal.team import Team
+from mitblr_club_api.models.exceptions import ClubTeamNotFoundException
 
 # Maximum length of queries accepted.
 MAX_LENGTH: int = 100
@@ -62,7 +62,7 @@ async def check_permission(
         if type(value) is ObjectId:
             club_teams[0][key] = str(value)
 
-    club_team = ClubTeam(**club_teams[0])
+    club_team = Team(**club_teams[0])
 
     match permission:
         case Permission.ALL:

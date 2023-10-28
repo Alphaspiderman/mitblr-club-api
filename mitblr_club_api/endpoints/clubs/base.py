@@ -5,7 +5,7 @@ from sanic.views import HTTPMethodView
 from sanic_ext import validate
 
 from mitblr_club_api.decorators.authorized import authorized_incls
-from mitblr_club_api.models.clubs import Club_Create
+from mitblr_club_api.models.request.club import Club_Request
 
 
 class Clubs(HTTPMethodView):
@@ -52,8 +52,10 @@ class Clubs(HTTPMethodView):
                 )
 
     @authorized_incls
-    @validate(json=Club_Create)
-    async def post(self, request: Request, body: Club_Create, club_slug: Optional[str]):
+    @validate(json=Club_Request)
+    async def post(
+        self, request: Request, body: Club_Request, club_slug: Optional[str]
+    ):
         """Create Clubs"""
         collection = request.app.ctx.db["clubs"]
         doc = await collection.find_one({"slug": body.slug})

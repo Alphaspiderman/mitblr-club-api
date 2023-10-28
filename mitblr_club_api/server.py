@@ -6,7 +6,7 @@ from sanic.log import logger
 from sanic_ext import validate
 
 from .app import appserver
-from .models.login_data import LoginData
+from .models.request.login import Login
 from .utils.generate_jwt import generate_jwt
 
 # noinspection PyUnresolvedReferences
@@ -134,8 +134,8 @@ async def jwt_status(request: Request):
 
 
 @app.post("/login")
-@validate(json=LoginData)
-async def login(request: Request, body: LoginData):
+@validate(json=Login)
+async def login(request: Request, body: Login):
     if body.auth_type == "USER":
         user = body.identifier
         password = body.secret

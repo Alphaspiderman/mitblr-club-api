@@ -5,7 +5,7 @@ from sanic.views import HTTPMethodView
 from sanic_ext import validate
 
 from mitblr_club_api.decorators.authorized import authorized_incls
-from mitblr_club_api.models.events import Event
+from mitblr_club_api.models.internal.events import Event
 
 
 class Club_Events(HTTPMethodView):
