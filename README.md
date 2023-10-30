@@ -1,9 +1,10 @@
-
 # MIT-BLR Club API
 
 An API to interface with the backend database containing information for operating the club ecosystem
 
-We strongly recommend that clubs contribute to the repository with the features (as issues or PRs) they require instead of forking and hosting a custom instance as it will lead to fragmentation.
+We strongly recommend that clubs contribute to the repository with the features (as issues or PRs) they require instead
+of forking and hosting a custom instance as it will lead to fragmentation.
+
 ## Getting Started (Running Locally)
 
 ### Prerequisites
@@ -26,7 +27,7 @@ cd mitblr-club-api
 
 ### Install Dependencies
 
-Install Poetry if you haven't already
+Install Poetry if you haven't already.
 
 ```bash
 pip install poetry
@@ -39,14 +40,14 @@ poetry install
 ```
 
 ### Setup Environment Variables
-Following the desciriptions provided in the "Environment Variables" section setup the .env file
+
+Following the descriptions provided in the "Environment Variables" section set up the `.env` file.
 
 ### Start the server
 
 ```bash
   poetry run task server
 ```
-
 
 ## Environment Variables
 
@@ -56,6 +57,7 @@ Make sure to set the following environment variables in your `.env` file:
 - `IS_PROD`: Determines the database connection and toggles `auto-reload` and `debug` in Sanic.
 - `SORT_YEAR`: Sets the sorting year for event documents in the database.
 - `HOST`: Used to add information about where the JWT was issued from, in case of multiple API instances.
+
 ## Deployment (Production)
 
 The following section is only for reference for those interested in learning about the process.
@@ -97,25 +99,26 @@ docker run -d --name clubapi -v private-key.pem:/app/private-key.pem:ro -v publi
 ```
 
 Note:
-We do not include the RSA keys or the `.env` file in the Docker container itself; instead, we mount them. This is to prevent accidently shipping with the container image
+We do not include the RSA keys or the `.env` file in the Docker container itself; instead, we mount them. This is to
+prevent accidentally shipping with the container image.
 
 That's it! You've successfully deployed the MIT-BLR Club API in a production environment.
+
 ## Contributing
 
 Contributions are always welcome!
 
 Do contact the current project maintainers beforehand for more information relating to the project.
 
-
 ## Documentation
+
 ### API
+
 [API Documentation](https://api.mitblr.club/docs)
 
-### Reference
-[Motor (MongoDB AsyncIO Driver)](https://motor.readthedocs.io/en/stable/)
+### References
 
-[Sanic (Guide)](https://sanic.dev/en/guide/)
-
-[Sanic (Documentation)](https://sanic.readthedocs.io/en/stable/sanic/api_reference.html)
-
-[OpenAPI Spec](https://spec.openapis.org/oas/v3.1.0)
+- [Motor (MongoDB AsyncIO Driver)](https://motor.readthedocs.io/en/stable/)
+- [Sanic (Guide)](https://sanic.dev/en/guide/)
+- [Sanic (Documentation)](https://sanic.readthedocs.io/en/stable/sanic/api_reference.html)
+- [OpenAPI Spec](https://spec.openapis.org/oas/v3.1.0)

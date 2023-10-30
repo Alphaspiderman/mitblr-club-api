@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from mitblr_club_api.models.enums.unit import Unit
 
 
-class Club_Request(BaseModel):
+class ClubRequest(BaseModel):
     faculty_advisors: list[dict[str, str]]
     institution: str
     name: str

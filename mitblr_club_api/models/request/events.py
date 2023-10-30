@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-class Event_Request(BaseModel):
+class EventRequest(BaseModel):
     date: datetime
     location: str
     name: str
