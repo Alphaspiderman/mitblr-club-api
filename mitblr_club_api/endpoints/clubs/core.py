@@ -6,7 +6,7 @@ from sanic.views import HTTPMethodView
 from mitblr_club_api.decorators.authorized import authorized_incls
 
 
-class Clubs_Core(HTTPMethodView):
+class ClubsCore(HTTPMethodView):
     """Endpoints regarding core committee of clubs."""
 
     @authorized_incls

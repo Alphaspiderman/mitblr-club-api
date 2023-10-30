@@ -7,11 +7,9 @@ from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorCollection
 from sanic.log import logger
 
-from mitblr_club_api.models.internal.team import Team
+from mitblr_club_api.endpoints import MAX_LENGTH
 from mitblr_club_api.models.exceptions import ClubTeamNotFoundException
-
-# Maximum length of queries accepted.
-MAX_LENGTH: int = 100
+from mitblr_club_api.models.internal.team import Team
 
 
 class Permission(Enum):

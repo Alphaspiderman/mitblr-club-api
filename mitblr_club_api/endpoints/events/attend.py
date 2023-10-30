@@ -1,4 +1,5 @@
 """API endpoints for events attendance."""
+from motor.motor_asyncio import AsyncIOMotorClient
 from sanic.request import Request
 from sanic.response import JSONResponse, json
 from sanic.views import HTTPMethodView
@@ -6,11 +7,11 @@ from sanic.views import HTTPMethodView
 from mitblr_club_api.decorators.authorized import authorized_incls
 
 
-class Events_Attend(HTTPMethodView):
+class EventsAttend(HTTPMethodView):
     """Endpoints regarding event attendance."""
 
     @authorized_incls
-    async def get(self, request: Request, slug: str, uuid: int) -> JSONResponse:
+    async def get(self, request: Request, slug: str, uuid: int):
         """
         Get a response that given an event slug and student registration number, returns if the student is
         signed up for that event or not.
@@ -68,7 +69,7 @@ class Events_Attend(HTTPMethodView):
 
     # TODO: Data validation.
     @authorized_incls
-    async def post(self, request: Request, slug: str, uuid: int) -> JSONResponse:
+    async def post(self, request: Request, slug: str, uuid: int):
         """
         Mark the attendance of an event attendee with an event slug and student registration number.
 
@@ -85,13 +86,14 @@ class Events_Attend(HTTPMethodView):
         :rtype: JSONResponse
         """
 
-        students = request.app.ctx.db["students"]
-        events = request.app.ctx.db["events"]
+        students: AsyncIOMotorClient = request.app.ctx.db["students"]
+        events: AsyncIOMotorClient = request.app.ctx.db["events"]
 
         event = await events.find_one({"slug": slug})
+
         if not event:
             return json(
-                {"status": 404, "error": "Not Found", "message": "No Events Found"},
+                {"status": 404, "error": "Not Found", "message": "No events found."},
                 status=404,
             )
 
@@ -100,7 +102,7 @@ class Events_Attend(HTTPMethodView):
 
         if not student:
             return json(
-                {"status": 404, "error": "Not Found", "message": "No student found"},
+                {"status": 404, "error": "Not Found", "message": "No student found."},
                 status=404,
             )
 
@@ -119,7 +121,7 @@ class Events_Attend(HTTPMethodView):
 
                 await students.update_one(query, update)
                 return json(
-                    {"status": 200, "message": "Student attendance has been updated"}
+                    {"status": 200, "message": "Student attendance has been updated."}
                 )
 
             # TODO: Update on event object in the events collection.
@@ -128,7 +130,7 @@ class Events_Attend(HTTPMethodView):
                 pass
 
         return json(
-            {"status": 404, "error": "Not Found", "message": "Update failed"},
+            {"status": 404, "error": "Not Found", "message": "Update failed."},
             status=404,
         )
 

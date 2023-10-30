@@ -1,4 +1,6 @@
 import bcrypt
+import jwt
+
 import motor.motor_asyncio as async_motor
 from dotenv import dotenv_values
 from sanic import Request, Sanic, response
@@ -13,7 +15,6 @@ from .utils.generate_jwt import generate_jwt
 # flake8: noqa
 import mitblr_club_api.endpoints
 
-import jwt
 
 logger.debug("Loading ENV")
 config = dotenv_values(".env")

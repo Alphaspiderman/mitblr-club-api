@@ -1,43 +1,41 @@
 """Package for API endpoints."""
 from mitblr_club_api.app import appserver
 
-# Students
 from .students import Students
 
-# Clubs
 from .clubs.base import Clubs
-from .clubs.core import Clubs_Core
-from .clubs.events import Club_Events
+from .clubs.core import ClubsCore
+from .clubs.events import ClubEvents
 
-# Events
 from .events.base import Events
-from .events.attend import Events_Attend
+from .events.attend import EventsAttend
 
-# Add Routes for Students
+# Maximum length of queries accepted.
+MAX_LENGTH: int = 100
+
 appserver.add_route(
     Students.as_view(), "/students/<uuid:strorempty>", strict_slashes=False
 )
 
-
-# Add Routes for Clubs
 appserver.add_route(
     Clubs.as_view(), "/clubs/<club_slug:strorempty>", strict_slashes=False
 )
+
 appserver.add_route(
-    Clubs_Core.as_view(), "/clubs/<club_slug:str>/core", strict_slashes=False
+    ClubsCore.as_view(), "/clubs/<club_slug:str>/core", strict_slashes=False
 )
+
 appserver.add_route(
-    Club_Events.as_view(),
+    ClubEvents.as_view(),
     "/clubs/<club_slug:str>/events/<event_slug:strorempty>",
     strict_slashes=False,
 )
 
-# Add Routes for Events
 appserver.add_route(
     Events.as_view(), "/events/<event_slug:strorempty>", strict_slashes=False
 )
+
 appserver.add_route(
-    Events_Attend.as_view(),
-    "/events/<slug:str>/attend/<uuid:int>",
+    EventsAttend.as_view(), "/events/<slug:str>/attend/<uuid:int>",
     strict_slashes=False,
 )

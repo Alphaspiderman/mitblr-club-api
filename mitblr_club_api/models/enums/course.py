@@ -7,3 +7,5 @@ class Course(Enum):
     CSE_CYBER = "CSE_CYBER"
     IT = "IT"
     ECE = "ECE"
+    DS = "DS"
+    ELE_CSE = "ELE_CSE"
