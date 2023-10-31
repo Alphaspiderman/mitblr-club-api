@@ -1,6 +1,6 @@
 from sanic.response import json
 
-from mitblr_club_api.utils.check_auth import check_request_for_authorization_status
+from mitblr_club_api.utils import check_request_for_authorization_status
 
 
 def authorized(f):
