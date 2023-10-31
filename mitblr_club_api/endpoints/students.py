@@ -58,7 +58,7 @@ class Students(HTTPMethodView):
         :type request: Request
         :param body: Body that contains data as a `Student_Create` object.
         :type body: StudentCreate
-        :param uuid: UUID, which can either be the student's application number, or their registration number.
+        :param uuid: Application number of the student.
         :type uuid: int
 
         :return: JSON response with the student's Mongo ObjectId if the student was successfully added to

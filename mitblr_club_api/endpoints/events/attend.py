@@ -13,14 +13,14 @@ class EventsAttend(HTTPMethodView):
     @authorized_incls
     async def get(self, request: Request, slug: str, uuid: int):
         """
-        Get a response that given an event slug and student registration number, returns if the student is
+        Get a response that given an event slug and student application number, returns if the student is
         signed up for that event or not.
 
         :param request: Sanic request.
         :type request: Request
         :param slug: Slug for the event.
         :type slug: str
-        :param uuid: Registration number of the student.
+        :param uuid: Application number of the student.
         :type uuid: int
 
         :return: JSON response with code 200 if the student is registered for the event. JSON response with
@@ -71,14 +71,14 @@ class EventsAttend(HTTPMethodView):
     @authorized_incls
     async def post(self, request: Request, slug: str, uuid: int):
         """
-        Mark the attendance of an event attendee with an event slug and student registration number.
+        Mark the attendance of an event attendee with an event slug and student application number.
 
         :param request: Sanic request.
         :type request: Request
         :param slug: Slug for the event.
         :type slug: are
-        :param reg_no: Registration number of the student.
-        :type reg_no: int
+        :param uuid: Application number of the student.
+        :type uuid: int
 
         :return: JSON response with code 200 if the student's attendance has been updated. JSON response
                  with code 404 if either the event, or the student is not found, or the student's attendance

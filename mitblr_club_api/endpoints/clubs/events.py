@@ -1,3 +1,4 @@
+"""API endpoints for club events."""
 from typing import Optional
 
 from motor.motor_asyncio import AsyncIOMotorCollection
@@ -26,11 +27,23 @@ class ClubEvents(HTTPMethodView):
         self, request: Request, body: EventRequest, club_slug: str,
         event_slug: Optional[str]
     ):
-        """Create Event under the Club"""
+        """
+        Create a new event in the database.
 
-        # Convert the body to a dict
+        :param request: Sanic request.
+        :type request: Request
+        :param body: Event information.
+        :type body: EventRequest
+        :param club_slug: Slug for the club.
+        :type club_slug: str
+        :param event_slug: Slug for the newly created event.
+        :type event_slug: Optional[str]
+
+        :return: Response with status whether the event is created or not.
+        :rtype: JSONResponse
+        """
+
         data = body.model_dump()
-
         sort_year = request.app.config["SORT_YEAR"]
 
         # Converting the event name into a compliant slug.

@@ -26,10 +26,6 @@ class Events(HTTPMethodView):
                  next week if the slug is an empty string. JSON with code 404 if the event does not exist
                  in either slug case.
         :rtype: JSONResponse
-
-        Args:
-            request:
-            event_slug:
         """
 
         collection: AsyncIOMotorClient = request.app.ctx.db["events"]

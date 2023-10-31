@@ -1,3 +1,4 @@
+"""API endpoints for clubs."""
 from typing import Optional
 
 from motor.motor_asyncio import AsyncIOMotorCollection
@@ -13,7 +14,17 @@ from mitblr_club_api.models.request.club import ClubRequest
 class Clubs(HTTPMethodView):
     @authorized_incls
     async def get(self, request: Request, club_slug: Optional[str]):
-        """Get Club Info"""
+        """
+        Get the club information given its slug. If the slug is empty, get the information of every club.
+
+        :param request: Sanic request.
+        :type request: Request
+        :param club_slug: Slug for the club.
+        :type club_slug: str
+
+        :return: Response with club information.
+        :rtype: JSONResponse
+        """
 
         collection: AsyncIOMotorCollection = request.app.ctx.db["clubs"]
 
@@ -62,7 +73,19 @@ class Clubs(HTTPMethodView):
     async def post(
         self, request: Request, body: ClubRequest, club_slug: Optional[str]
     ):
-        """Create Clubs"""
+        """
+        Create a new club in the database.
+
+        :param request: Sanic request.
+        :type request: Request
+        :param body: Club information.
+        :type body: ClubRequest
+        :param club_slug: Slug for the newly created club.
+        :type club_slug: Optional[str]
+
+        :return: Response with status whether the club is created or not.
+        :rtype: JSONResponse
+        """
 
         collection: AsyncIOMotorCollection = request.app.ctx.db["clubs"]
 

@@ -1,3 +1,4 @@
+"""API endpoints for club core committees."""
 from typing import Optional
 
 from sanic import Request
