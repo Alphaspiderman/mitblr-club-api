@@ -3,13 +3,13 @@ import jwt
 
 import motor.motor_asyncio as async_motor
 from dotenv import dotenv_values
-from sanic import Request, Sanic, response
+from sanic import Request, Sanic, response, json
 from sanic.log import logger
 from sanic_ext import validate
 
 from .app import appserver
 from .models.request.login import Login
-from .utils.generate_jwt import generate_jwt
+from .utils import generate_jwt
 
 # noinspection PyUnresolvedReferences
 # flake8: noqa
@@ -19,23 +19,18 @@ import mitblr_club_api.endpoints
 logger.debug("Loading ENV")
 config = dotenv_values(".env")
 
-# Read the public and private keys
-pub = open("public-key.pem", "r")
-priv = open("private-key.pem", "r")
-# Add the keys to the config
-config["PUB_KEY"] = pub.read()
-config["PRIV_KEY"] = priv.read()
-# Close the files
-pub.close()
-priv.close()
+# Read the public and private keys and add them to the config.
+with open('public-key.pem') as public_key_file:
+    config['PUB_KEY'] = public_key_file.read()
 
-# Try to get state from ENV, defaults to being dev
-isprod: str = config.get("IS_PROD", "false")
-# Convert the string to a bool
-isprod = isprod.lower() == "true"
-# Update the config with the bool
-config.update({"IS_PROD": isprod})
-# IS_PROD is now a bool in the config
+with open('private-key.pem') as private_key_file:
+    config['PRIV_KEY'] = private_key_file.read()
+
+# Try to get state from the ENV, defaults to being dev.
+is_prod: str = config.get("IS_PROD", "false")
+
+# Convert the string to a bool and update the config with the bool.
+config.update({"IS_PROD": is_prod.lower() == "true"})
 
 app: Sanic = appserver
 app.config.update(config)
@@ -43,39 +38,32 @@ app.config.update(config)
 
 @app.listener("before_server_start")
 async def register_db(app: Sanic):
-    logger.info("Connecting to MongoDB")
-    # Get Mongo Connection URL
+    logger.info("Connecting to MongoDB.")
     connection = app.config.get("MONGO_CONNECTION_URI")
+
     if connection is None:
         logger.error("Missing MongoDB URL")
         app.stop(terminate=True)
-    # Create a database connection pool
+
     client = async_motor.AsyncIOMotorClient(
         connection,
-        # in milliseconds
         maxIdleTimeMS=10000,
-        # minimal pool size
         minPoolSize=10,
-        # maximal pool size
         maxPoolSize=50,
-        # connection timeout in milliseconds
         connectTimeoutMS=10000,
-        # boolean
         retryWrites=True,
-        # wait queue in milliseconds
         waitQueueTimeoutMS=10000,
-        # in milliseconds
         serverSelectionTimeoutMS=10000,
     )
 
-    logger.info("Connected to MongoDB")
+    logger.info("Connected to MongoDB.")
 
-    # Add MongoDB connection client to ctx for use in other modules
+    # Add MongoDB connection client to ctx for use in other modules.
     app.ctx.db_client = client
 
-    # Check for Production environment
-    isprod = app.config["IS_PROD"]
-    if isprod:
+    # Check for production environment.
+    is_prod = app.config["IS_PROD"]
+    if is_prod:
         logger.info("Connected to PRODUCTION")
         app.ctx.db = client["mitblr-club-api"]
     else:
@@ -138,58 +126,68 @@ async def jwt_status(request: Request):
 @validate(json=Login)
 async def login(request: Request, body: Login):
     status = 200
+
     if body.auth_type == "USER":
         user = body.identifier
         password = body.secret
 
         collection = request.app.ctx.db["authentication"]
         doc = await collection.find_one({"auth_type": "USER", "username": user})
+
         # Check if user exists
         if doc is None:
-            d = {
-                "authenticated": False,
-                "message": "User not found",
-                "error": "Not Found",
-            }
-            return response.json(d, status=404)
+            return json(
+                {
+                    "authenticated": False,
+                    "message": "User not found",
+                    "error": "Not Found",
+                }, status=404
+            )
+
         password_hash = doc.get("password_hash")
+
         # We are not sure if we are going to be omitting the password_hash field on the
         # document or setting the field as empty. So we check for both cases.
         if password_hash is None or password_hash == b"":
-            # Operations team password setup
+            # Operations team password setup.
             # Generate a hash for the password and store it in the database
             password_hash = bcrypt.hashpw(password.encode(), salt=bcrypt.gensalt())
-            # Upsert password hash to MongoDB
+
+            # Upsert password hash to MongoDB.
             await collection.update_one(
                 {"auth_type": "USER", "username": user},
                 {"$set": {"password_hash": password_hash}},
                 upsert=True,
             )
-            # Set verified to True (only for first time login)
+
+            # Set verified to True (only for first time login).
             verified = True
         else:
-            # Verify password for exisitng users
+            # Verify the password for existing users.
             verified = bcrypt.checkpw(password.encode(), password_hash)
 
-        # If verified, generate JWT
+        # If verified, generate JWT.
         if verified:
-            jwt_dat = {
+            jwt_data = {
                 "auth_id": str(doc["_id"]),
                 "student_id": str(doc["student_id"]),
                 "team_id": str(doc["team_id"]),
             }
-            jwt = await generate_jwt(app=request.app, data=jwt_dat, validity=90)
-            d = {"identifier": jwt, "authenticated": True}
+
+            jwt_ = await generate_jwt(app=request.app, data=jwt_data, validity=90)
+            json_payload = {"identifier": jwt_, "authenticated": True}
+
         else:
-            # If not verified, return error
-            d = {
+            # If not verified, return error.
+            json_payload = {
                 "authenticated": False,
                 "message": "Incorrect password",
                 "error": "Unauthorized",
             }
+            
             status = 401
 
-        return response.json(d, status=status)
+        return response.json(json_payload, status=status)
 
     if body.auth_type == "AUTOMATION":
         app_id = body.identifier
@@ -200,27 +198,30 @@ async def login(request: Request, body: Login):
 
         if bcrypt.checkpw(token.encode(), doc["token"]):
             # TODO - Add useful data
-            jwt_dat = {"username": app_id}
-            jwt = await generate_jwt(app=request.app, data=jwt_dat, validity=1440)
-            d = {"identifier": jwt, "authenticated": True}
+            jwt_data = {"username": app_id}
+            jwt_ = await generate_jwt(app=request.app, data=jwt_data, validity=1440)
+            json_payload = {"identifier": jwt_, "authenticated": True}
         else:
-            d = {"identifier": app_id, "authenticated": False}
+            json_payload = {"identifier": app_id, "authenticated": False}
 
-        return response.json(d)
+        return response.json(json_payload)
 
 
 if __name__ == "__main__":
     # Check for Production environment
-    isprod = app.config["IS_PROD"]
+    is_prod = app.config["IS_PROD"]
+
     # Use a KWARGS dict to pass to app.run dynamically
     kwargs = {"access_log": True, "host": "0.0.0.0"}
-    if isprod:
-        # If PROD, check for HOST (internally required for JWTs)
+
+    if is_prod:
+        # If prod, check for HOST (internally required for JWTs).
         if app.config.get("HOST") is None:
             logger.error("MISSING HOST")
             quit(1)
+
     else:
-        # If DEV, set HOST to DEV
+        # If DEV, set HOST to DEV.
         app.config["HOST"] = "DEV"
         kwargs["debug"] = True
         kwargs["auto_reload"] = True
