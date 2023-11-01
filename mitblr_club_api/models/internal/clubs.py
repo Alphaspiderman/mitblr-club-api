@@ -1,22 +1,8 @@
-from enum import Enum
-
 from bson import ObjectId
 from pydantic import BaseModel
 
-
-class CoreCommittee(Enum):
-    PRESIDENT = "president"
-    VICE_PRESIDENT = "vice_president"
-    TREASURER = "treasurer"
-    EXECUTIVE_SECRETARY = "executive_secretary"
-    GENERAL_SECRETARY = "general_secretary"
-    OPERATIONS_LEAD = "operations_lead"
-
-
-class Unit(Enum):
-    CHAPTER = "chapter"
-    CLUB = "club"
-    SOCIETY = "society"
+from mitblr_club_api.models.enums.core_committee import CoreCommittee
+from mitblr_club_api.models.enums.unit import Unit
 
 
 class Club(BaseModel):

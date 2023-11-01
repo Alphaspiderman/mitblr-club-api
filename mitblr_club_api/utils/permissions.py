@@ -7,17 +7,13 @@ from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorCollection
 from sanic.log import logger
 
-from mitblr_club_api.models.club_teams import ClubTeam
-from mitblr_club_api.utils.exceptions import ClubTeamNotFoundException
-
-# Maximum length of queries accepted.
-MAX_LENGTH: int = 100
+from mitblr_club_api.endpoints import MAX_LENGTH
+from mitblr_club_api.models.exceptions import ClubTeamNotFoundException
+from mitblr_club_api.models.internal.team import Team
 
 
 class Permission(Enum):
-    """
-    All permissions within the database as enum strings and all permissions.
-    """
+    """All permissions within the database as enum strings and all permissions."""
 
     CREATE_EVENT = "create_event"
     MODIFY_EVENT = "modify_event"
@@ -34,16 +30,17 @@ async def check_permission(
     """
     Check the permissions given to a student within the club teams.
 
-    Args:
-        collection (AsyncIOMotorCollection): Database collection in which student ID is queried.
-        student_id (ObjectId): Mongo ObjectId for the student in the Club Teams.
-        permission (Permission): Permissions to check on the Club Teams.
+    :param collection: Database collection in which student ID is queried.
+    :type collection: AsyncIOMotorCollection
+    :param student_id: Mongo ObjectId for thr student in the club teams.
+    :type student_id: ObjectId
+    :param permission: Permissions to check for the club teams.
+    :type permission: Permission
 
-    Raises:
-        ClubTeamNotFoundException: When no Club Team with the given student_id exists.
+    :raises ClubTeamNotFoundException: When no club team with the given `student_id` exists.
 
-    Returns:
-        True if the permissions in the database match the permission parameter; else False.
+    :return: True if the permissions in the database match the permission parameter; else False.
+    :rtype: bool
     """
 
     club_teams = await collection.find({"student_id": student_id}).to_list(MAX_LENGTH)
@@ -62,7 +59,7 @@ async def check_permission(
         if type(value) is ObjectId:
             club_teams[0][key] = str(value)
 
-    club_team = ClubTeam(**club_teams[0])
+    club_team = Team(**club_teams[0])
 
     match permission:
         case Permission.ALL:
