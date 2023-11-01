@@ -1,4 +1,4 @@
-# Disable Vitual ENV Creation
+# Disable Virtual ENV Creation
 poetry config virtualenvs.create false
 # Just install
 poetry install --no-interaction --no-ansi

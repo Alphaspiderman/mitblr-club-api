@@ -3,21 +3,21 @@
 from typing import Any
 
 from bson import ObjectId
+from motor.motor_asyncio import AsyncIOMotorClient
 from sanic.request import Request
 from sanic.response import JSONResponse, json
 from sanic.views import HTTPMethodView
 from sanic_ext import validate
 
-from mitblr_club_api.app import appserver
 from mitblr_club_api.decorators.authorized import authorized_incls
-from mitblr_club_api.models.students import Student_Create
+from mitblr_club_api.models.request.student import StudentRequest
 
 
 class Students(HTTPMethodView):
     """Endpoints regarding students."""
 
     @authorized_incls
-    async def get(self, request: Request, uuid: int) -> JSONResponse:
+    async def get(self, request: Request, uuid: int):
         """
         Check if a student with given UUID exists in the database.
 
@@ -31,7 +31,7 @@ class Students(HTTPMethodView):
         :rtype: JSONResponse
         """
 
-        collection = request.app.ctx.db["students"]
+        collection: AsyncIOMotorClient = request.app.ctx.db["students"]
 
         student = await collection.find_one(
             {"$or": [{"application_number": uuid}, {"registration_number": uuid}]}
@@ -42,25 +42,23 @@ class Students(HTTPMethodView):
             data = {"exists": "False"}
         else:
             data = {
-                "exists": "True",
-                "registration_number": student["registration_number"],
+                "exists": True,
+                "uuid": student["application_number"],
             }
 
         return json(data)
 
     @authorized_incls
-    @validate(json=Student_Create)
-    async def post(
-        self, request: Request, body: Student_Create, uuid: str
-    ) -> JSONResponse:
+    @validate(json=StudentRequest)
+    async def post(self, request: Request, body: StudentRequest, uuid: str):
         """
         Create a student in the database using Python models.
 
         :param request: Sanic request.
         :type request: Request
         :param body: Body that contains data as a `Student_Create` object.
-        :type body: Student_Create
-        :param uuid: UUID, which can either be the student's application number, or their registration number.
+        :type body: StudentCreate
+        :param uuid: Application number of the student.
         :type uuid: int
 
         :return: JSON response with the student's Mongo ObjectId if the student was successfully added to
@@ -69,14 +67,19 @@ class Students(HTTPMethodView):
         :rtype:
         """
 
-        collection = request.app.ctx.db["students"]
+        collection: AsyncIOMotorClient = request.app.ctx.db["students"]
 
         student = await collection.find_one(
             {"application_number": body.application_number}
         )
 
         if student is not None:
-            data = {"Error Code": "409", "Message": "Conflict - Object already exists"}
+            data = {
+                "status": 409,
+                "error": "Conflict",
+                "message": "Object already exists",
+            }
+
             return json(data, status=409)
 
         student: dict[str, Any] = {
@@ -95,7 +98,7 @@ class Students(HTTPMethodView):
         }
 
         result = await collection.insert_one(student)
-        data = {"Insert": "True", "ObjectId": str(result.inserted_id)}
+        data = {"status": 200, "ObjectId": str(result.inserted_id)}
 
         return json(data)
 
@@ -103,6 +106,3 @@ class Students(HTTPMethodView):
     @authorized_incls
     async def patch(self, request: Request, uuid: str):
         ...
-
-
-appserver.add_route(Students.as_view(), "/students/<uuid:strorempty>")

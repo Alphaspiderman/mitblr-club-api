@@ -4,7 +4,7 @@ ClubTeam document model.
 from pydantic import BaseModel
 
 
-class ClubTeam(BaseModel):
+class Team(BaseModel):
     """
     ClubTeam document model.
     """
