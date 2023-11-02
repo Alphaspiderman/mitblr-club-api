@@ -13,11 +13,7 @@ from .utils import generate_jwt
 
 # noinspection PyUnresolvedReferences
 # flake8: noqa
-<<<<<<< HEAD
-from mitblr_club_api.endpoints import clubs, events, students,club_teams
-=======
 import mitblr_club_api.endpoints
->>>>>>> master
 
 
 logger.debug("Loading ENV")
