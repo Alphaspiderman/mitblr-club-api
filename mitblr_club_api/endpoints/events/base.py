@@ -6,9 +6,7 @@ from sanic.request import Request
 from sanic.response import JSONResponse, json
 from sanic.views import HTTPMethodView
 
-#from mitblr_club_api.endpoints import MAX_LENGTH
-
-MAX_LENGTH = 100
+from mitblr_club_api.endpoints import MAX_LENGTH
 
 class Events(HTTPMethodView):
     """Endpoints regarding events."""
