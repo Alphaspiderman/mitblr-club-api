@@ -7,8 +7,11 @@ from sanic.views import HTTPMethodView
 from sanic_ext import validate
 
 from mitblr_club_api.decorators.authorized import authorized_incls
-from mitblr_club_api.endpoints import MAX_LENGTH
+
+# from mitblr_club_api.endpoints import MAX_LENGTH
 from mitblr_club_api.models.request.club import ClubRequest
+
+MAX_LENGTH = 100
 
 
 class Clubs(HTTPMethodView):

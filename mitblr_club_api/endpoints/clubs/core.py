@@ -51,8 +51,6 @@ class ClubsCore(HTTPMethodView):
             ).to_list(length=MAX_LENGTH)
         ]
 
-        print(core_committee_list)
-
         return json(core_committee_list)
 
     # TODO - Data Validation
@@ -147,7 +145,9 @@ class ClubsCore(HTTPMethodView):
         if any(body.position["name"] == member.value for member in CoreCommittee):
             filter = {"name": body.club}
             update = {
-                "$set": {f"core_committee.{position['name']}": ObjectId(student["_id"])}
+                "$set": {
+                    f"core_committee.{position['name']}": ObjectId(result.inserted_id)
+                }
             }
             await clubs.update_one(filter, update, upsert=True)
 
