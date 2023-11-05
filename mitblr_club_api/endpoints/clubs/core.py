@@ -73,7 +73,7 @@ class ClubsCore(HTTPMethodView):
         )
 
         if student is None:
-            d = {"Error Code": "404", "Message": "Not Found - Student not found"}
+            d = {"Error Code": "404", "Message": "Student not found."}
             return json(d, status=404)
 
         # Checking if student is already a part of the club teams
@@ -119,7 +119,7 @@ class ClubsCore(HTTPMethodView):
         else:
             d = {
                 "Error Code": "400",
-                "Message": "Bad Request - Permissions not provided",
+                "Message": "Bad Request - Permissions not provided.",
             }
             return json(d, status=400)
 
@@ -127,7 +127,7 @@ class ClubsCore(HTTPMethodView):
         if all(key in body.position for key in ["type", "name"]):
             position = {"type": body.position["type"], "name": body.position["name"]}
         else:
-            d = {"Error Code": "400", "Message": "Bad Request - Position not provided"}
+            d = {"Error Code": "400", "Message": "Bad Request - Position not provided."}
             return json(d, status=400)
 
         # Inserting to club_teams collection

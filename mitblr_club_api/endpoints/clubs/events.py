@@ -63,7 +63,11 @@ class ClubEvents(HTTPMethodView):
 
         if event:
             return json(
-                {"status": 409, "error": "Conflict", "message": "Event already exists"},
+                {
+                    "status": 409,
+                    "error": "Conflict",
+                    "message": "Event already exists.",
+                },
                 status=409,
             )
 
@@ -76,7 +80,7 @@ class ClubEvents(HTTPMethodView):
         return json(
             {
                 "status": 201,
-                "message": "Event created",
+                "message": "Event created.",
                 "id": str(result.inserted_id),
                 "slug": event_slug,
             },

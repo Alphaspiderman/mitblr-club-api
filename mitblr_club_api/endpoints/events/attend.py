@@ -38,7 +38,7 @@ class EventsAttend(HTTPMethodView):
 
         if not event:
             return json(
-                {"status": 404, "error": "Not Found", "message": "No Events Found"},
+                {"status": 404, "error": "Not Found", "message": "No events found."},
                 status=404,
             )
 
@@ -48,21 +48,21 @@ class EventsAttend(HTTPMethodView):
 
         if not student:
             return json(
-                {"status": 404, "error": "Not Found", "message": "No Student Found"},
+                {"status": 404, "error": "Not Found", "message": "No student found."},
                 status=404,
             )
 
         for student_event in student["events"]:
             if student_event["event_id"] == event["_id"]:
                 return json(
-                    {"status": 200, "message": "Student is registered for the event"}
+                    {"status": 200, "message": "Student is registered for the event."}
                 )
 
         return json(
             {
                 "status": 404,
                 "error": "Not Found",
-                "message": "Student is not registered for the event",
+                "message": "Student is not registered for the event.",
             },
             status=404,
         )
