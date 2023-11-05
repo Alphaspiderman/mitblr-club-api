@@ -6,7 +6,9 @@ from sanic.request import Request
 from sanic.response import JSONResponse, json
 from sanic.views import HTTPMethodView
 
-from mitblr_club_api.endpoints import MAX_LENGTH
+# from mitblr_club_api.endpoints import MAX_LENGTH
+
+MAX_LENGTH = 100
 
 
 class Events(HTTPMethodView):
@@ -41,7 +43,11 @@ class Events(HTTPMethodView):
 
             if len(events) == 0:
                 return json(
-                    {"status": 404, "error": "Not Found", "message": "No events found."},
+                    {
+                        "status": 404,
+                        "error": "Not Found",
+                        "message": "No events found.",
+                    },
                     status=404,
                 )
 
@@ -49,8 +55,9 @@ class Events(HTTPMethodView):
                 {
                     "name": event["name"],
                     "date": event["date"].isoformat(),
-                    "club": event["club"]
-                } for event in events
+                    "club": event["club"],
+                }
+                for event in events
             ]
 
             return json(events_)
@@ -61,7 +68,11 @@ class Events(HTTPMethodView):
 
             if not event:
                 return json(
-                    {"status": 404, "error": "Not Found", "message": "No events found."},
+                    {
+                        "status": 404,
+                        "error": "Not Found",
+                        "message": "No events found.",
+                    },
                     status=404,
                 )
 
