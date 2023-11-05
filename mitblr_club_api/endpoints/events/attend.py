@@ -42,7 +42,7 @@ class EventsAttend(HTTPMethodView):
                 status=404,
             )
 
-        student = await request.app.ctx.cache.get_student(uuid)
+        student = await request.ctx.cache.get_student(uuid)
 
         if not student:
             return json(
@@ -87,7 +87,7 @@ class EventsAttend(HTTPMethodView):
         students: AsyncIOMotorClient = request.app.ctx.db["students"]
 
         # Can used cached event object due to no data modification.
-        event = await request.app.ctx.cache.get_event(slug)
+        event = await request.ctx.cache.get_event(slug)
 
         if not event:
             return json(
@@ -95,7 +95,7 @@ class EventsAttend(HTTPMethodView):
                 status=404,
             )
 
-        student = await request.app.ctx.cache.get_student(int(uuid))
+        student = await request.ctx.cache.get_student(int(uuid))
 
         if not student:
             return json(
