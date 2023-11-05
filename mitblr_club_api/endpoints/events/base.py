@@ -8,6 +8,7 @@ from sanic.views import HTTPMethodView
 
 from mitblr_club_api.endpoints import MAX_LENGTH
 
+
 class Events(HTTPMethodView):
     """Endpoints regarding events."""
 
@@ -40,7 +41,11 @@ class Events(HTTPMethodView):
 
             if len(events) == 0:
                 return json(
-                    {"status": 404, "error": "Not Found", "message": "No events found."},
+                    {
+                        "status": 404,
+                        "error": "Not Found",
+                        "message": "No events found.",
+                    },
                     status=404,
                 )
 
@@ -48,8 +53,9 @@ class Events(HTTPMethodView):
                 {
                     "name": event["name"],
                     "date": event["date"].isoformat(),
-                    "club": event["club"]
-                } for event in events
+                    "club": event["club"],
+                }
+                for event in events
             ]
 
             return json(events_)
@@ -60,7 +66,11 @@ class Events(HTTPMethodView):
 
             if not event:
                 return json(
-                    {"status": 404, "error": "Not Found", "message": "No events found."},
+                    {
+                        "status": 404,
+                        "error": "Not Found",
+                        "message": "No events found.",
+                    },
                     status=404,
                 )
 

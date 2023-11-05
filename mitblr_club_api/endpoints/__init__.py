@@ -36,6 +36,7 @@ appserver.add_route(
 )
 
 appserver.add_route(
-    EventsAttend.as_view(), "/events/<slug:str>/attend/<uuid:int>",
+    EventsAttend.as_view(),
+    "/events/<slug:str>/attend/<uuid:int>",
     strict_slashes=False,
 )

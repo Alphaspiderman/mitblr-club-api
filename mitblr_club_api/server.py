@@ -20,11 +20,11 @@ logger.debug("Loading ENV")
 config = dotenv_values(".env")
 
 # Read the public and private keys and add them to the config.
-with open('public-key.pem') as public_key_file:
-    config['PUB_KEY'] = public_key_file.read()
+with open("public-key.pem") as public_key_file:
+    config["PUB_KEY"] = public_key_file.read()
 
-with open('private-key.pem') as private_key_file:
-    config['PRIV_KEY'] = private_key_file.read()
+with open("private-key.pem") as private_key_file:
+    config["PRIV_KEY"] = private_key_file.read()
 
 # Try to get state from the ENV, defaults to being dev.
 is_prod: str = config.get("IS_PROD", "false")
@@ -141,7 +141,8 @@ async def login(request: Request, body: Login):
                     "authenticated": False,
                     "message": "User not found",
                     "error": "Not Found",
-                }, status=404
+                },
+                status=404,
             )
 
         password_hash = doc.get("password_hash")
@@ -184,7 +185,7 @@ async def login(request: Request, body: Login):
                 "message": "Incorrect password",
                 "error": "Unauthorized",
             }
-            
+
             status = 401
 
         return response.json(json_payload, status=status)

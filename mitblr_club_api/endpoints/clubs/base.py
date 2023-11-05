@@ -10,6 +10,7 @@ from mitblr_club_api.decorators.authorized import authorized_incls
 from mitblr_club_api.endpoints import MAX_LENGTH
 from mitblr_club_api.models.request.club import ClubRequest
 
+
 class Clubs(HTTPMethodView):
     @authorized_incls
     async def get(self, request: Request, club_slug: Optional[str]):
@@ -34,7 +35,7 @@ class Clubs(HTTPMethodView):
             if clubs is None:
                 return json(
                     {"status": 404, "error": "Not Found", "message": "No clubs found."},
-                    status=404
+                    status=404,
                 )
 
             club_list = [
@@ -43,7 +44,8 @@ class Clubs(HTTPMethodView):
                     "slug": club["slug"],
                     "unit": club["unit_type"],
                     "institution": club["institution"],
-                } for club in clubs
+                }
+                for club in clubs
             ]
 
             return json(club_list)
@@ -69,9 +71,7 @@ class Clubs(HTTPMethodView):
 
     @authorized_incls
     @validate(json=ClubRequest)
-    async def post(
-        self, request: Request, body: ClubRequest, club_slug: Optional[str]
-    ):
+    async def post(self, request: Request, body: ClubRequest, club_slug: Optional[str]):
         """
         Create a new club in the database.
 
@@ -96,7 +96,7 @@ class Clubs(HTTPMethodView):
             if "name" not in faculty or "email" not in faculty:
                 return json(
                     {"status": 500, "message": "Required fields not present."},
-                    status=500
+                    status=500,
                 )
 
             faculty_advisors.append(
@@ -120,7 +120,7 @@ class Clubs(HTTPMethodView):
 
         return json(
             {"status": 409, "error": "Conflict", "message": "Object already exists."},
-            status=409
+            status=409,
         )
 
     # TODO - Data Validation
