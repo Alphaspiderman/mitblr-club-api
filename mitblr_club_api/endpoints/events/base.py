@@ -1,12 +1,7 @@
 """API endpoints for events"""
-from datetime import datetime, timedelta
-
-from motor.motor_asyncio import AsyncIOMotorClient
 from sanic.request import Request
-from sanic.response import JSONResponse, json
+from sanic.response import json
 from sanic.views import HTTPMethodView
-
-from mitblr_club_api.endpoints import MAX_LENGTH
 
 
 class Events(HTTPMethodView):
@@ -28,47 +23,48 @@ class Events(HTTPMethodView):
         :rtype: JSONResponse
         """
 
-        collection: AsyncIOMotorClient = request.app.ctx.db["events"]
-
         if event_slug == "":
             # Slug is empty, return the events in the next week.
-            start_date = datetime.utcnow()
-            end_date = start_date + timedelta(days=7)
+            events = await request.app.ctx.cache.get_event_by_timedelta(delta=7)
 
-            events = await collection.find(
-                {"date": {"$gte": start_date, "$lte": end_date}}
-            ).to_list(length=MAX_LENGTH)
-
-            if len(events) == 0:
+            if events:
                 return json(
-                    {"status": 404, "error": "Not Found", "message": "No events found."},
-                    status=404,
-                )
-
-            events_ = [
-                {
-                    "name": event["name"],
-                    "date": event["date"].isoformat(),
-                    "club": event["club"]
-                } for event in events
-            ]
-
-            return json(events_)
-
-        else:
-            # Return event info based on the slug.
-            event = await collection.find_one({"slug": event_slug})
-
-            if not event:
-                return json(
-                    {"status": 404, "error": "Not Found", "message": "No events found."},
-                    status=404,
+                    [
+                        {
+                            "name": event["name"],
+                            "date": event["date"].isoformat(),
+                            "club": event["club"],
+                        }
+                        for event in events
+                    ]
                 )
 
             return json(
                 {
-                    "name": event["name"],
-                    "date": event["date"].isoformat(),
-                    "club": event["club"],
-                }
+                    "status": 404,
+                    "error": "Not Found",
+                    "message": "No events found.",
+                },
+                status=404,
+            )
+
+        else:
+            # Return event info based on the slug.
+            event = await request.ctx.app.ctx.cache.get_event(event_slug)
+
+            if event:
+                return json(
+                    {
+                        "name": event["name"],
+                        "date": event["date"].isoformat(),
+                        "club": event["club"],
+                    }
+                )
+            return json(
+                {
+                    "status": 404,
+                    "error": "Not Found",
+                    "message": "No events found.",
+                },
+                status=404,
             )

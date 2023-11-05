@@ -115,7 +115,7 @@ class Cache:
             else:
                 return None
         return club
-    
+
     async def fetch_club(self, club_id: str) -> Optional[Club]:
         """
         Fetches the club from the cache (by Slug) and saves to cache

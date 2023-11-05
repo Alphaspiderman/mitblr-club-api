@@ -5,7 +5,7 @@ from typing import Any
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 from sanic.request import Request
-from sanic.response import JSONResponse, json
+from sanic.response import json
 from sanic.views import HTTPMethodView
 from sanic_ext import validate
 
@@ -31,11 +31,7 @@ class Students(HTTPMethodView):
         :rtype: JSONResponse
         """
 
-        collection: AsyncIOMotorClient = request.app.ctx.db["students"]
-
-        student = await collection.find_one(
-            {"$or": [{"application_number": uuid}, {"registration_number": uuid}]}
-        )
+        student = await request.ctx.cache.get_student(int(uuid))
 
         data: dict[str, bool | str]
         if student is None:
@@ -69,9 +65,7 @@ class Students(HTTPMethodView):
 
         collection: AsyncIOMotorClient = request.app.ctx.db["students"]
 
-        student = await collection.find_one(
-            {"application_number": body.application_number}
-        )
+        student = await request.ctx.cache.get_student(int(body.application_number))
 
         if student is not None:
             data = {

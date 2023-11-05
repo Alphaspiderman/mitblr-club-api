@@ -1,7 +1,7 @@
 """API endpoints for events attendance."""
 from motor.motor_asyncio import AsyncIOMotorClient
 from sanic.request import Request
-from sanic.response import JSONResponse, json
+from sanic.response import json
 from sanic.views import HTTPMethodView
 
 from mitblr_club_api.decorators.authorized import authorized_incls
@@ -31,9 +31,9 @@ class EventsAttend(HTTPMethodView):
 
         year = request.app.config["SORT_YEAR"]
 
-        students = request.app.ctx.db["students"]
         events = request.app.ctx.db["events"]
 
+        # Unable to Cache due to attendance being on the object.
         event = await events.find_one({"slug": slug, "sort_year": year})
 
         if not event:
@@ -42,9 +42,7 @@ class EventsAttend(HTTPMethodView):
                 status=404,
             )
 
-        student = await students.find_one(
-            {"application_number": str(uuid)}, {"events": 1}
-        )
+        student = await request.app.ctx.cache.get_student(uuid)
 
         if not student:
             return json(
@@ -87,9 +85,9 @@ class EventsAttend(HTTPMethodView):
         """
 
         students: AsyncIOMotorClient = request.app.ctx.db["students"]
-        events: AsyncIOMotorClient = request.app.ctx.db["events"]
 
-        event = await events.find_one({"slug": slug})
+        # Can used cached event object due to no data modification.
+        event = await request.app.ctx.cache.get_event(slug)
 
         if not event:
             return json(
@@ -97,8 +95,7 @@ class EventsAttend(HTTPMethodView):
                 status=404,
             )
 
-        # TODO - Timed Cache
-        student = await students.find_one({"application_number": str(uuid)})
+        student = await request.app.ctx.cache.get_student(int(uuid))
 
         if not student:
             return json(

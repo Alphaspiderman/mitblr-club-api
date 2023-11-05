@@ -8,8 +8,10 @@ from sanic.log import logger
 from sanic_ext import validate
 
 from .app import appserver
+from .models.cache_tup import Cache
 from .models.request.login import Login
 from .utils import generate_jwt
+from .models.internal.team import Team
 
 # noinspection PyUnresolvedReferences
 # flake8: noqa
@@ -20,11 +22,11 @@ logger.debug("Loading ENV")
 config = dotenv_values(".env")
 
 # Read the public and private keys and add them to the config.
-with open('public-key.pem') as public_key_file:
-    config['PUB_KEY'] = public_key_file.read()
+with open("public-key.pem") as public_key_file:
+    config["PUB_KEY"] = public_key_file.read()
 
-with open('private-key.pem') as private_key_file:
-    config['PRIV_KEY'] = private_key_file.read()
+with open("private-key.pem") as private_key_file:
+    config["PRIV_KEY"] = private_key_file.read()
 
 # Try to get state from the ENV, defaults to being dev.
 is_prod: str = config.get("IS_PROD", "false")
@@ -69,6 +71,8 @@ async def register_db(app: Sanic):
     else:
         logger.info("Connected to DEV ENV")
         app.ctx.db = client["mitblr-club-dev"]
+
+    app.ctx.cache = Cache(app.ctx.db, sort_year=app.config["SORT_YEAR"])
 
 
 @app.listener("after_server_stop")
@@ -141,7 +145,8 @@ async def login(request: Request, body: Login):
                     "authenticated": False,
                     "message": "User not found",
                     "error": "Not Found",
-                }, status=404
+                },
+                status=404,
             )
 
         password_hash = doc.get("password_hash")
@@ -177,6 +182,9 @@ async def login(request: Request, body: Login):
             jwt_ = await generate_jwt(app=request.app, data=jwt_data, validity=90)
             json_payload = {"identifier": jwt_, "authenticated": True}
 
+            # Fetch and cache team data.
+            await request.app.ctx.cache.fetch_team(jwt_data["team_id"])
+
         else:
             # If not verified, return error.
             json_payload = {
@@ -184,7 +192,7 @@ async def login(request: Request, body: Login):
                 "message": "Incorrect password",
                 "error": "Unauthorized",
             }
-            
+
             status = 401
 
         return response.json(json_payload, status=status)

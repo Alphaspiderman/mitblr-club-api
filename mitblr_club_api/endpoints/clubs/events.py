@@ -24,8 +24,11 @@ class ClubEvents(HTTPMethodView):
     @authorized_incls
     @validate(json=EventRequest)
     async def post(
-        self, request: Request, body: EventRequest, club_slug: str,
-        event_slug: Optional[str]
+        self,
+        request: Request,
+        body: EventRequest,
+        club_slug: str,
+        event_slug: Optional[str],
     ):
         """
         Create a new event in the database.

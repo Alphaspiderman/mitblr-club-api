@@ -10,9 +10,6 @@ from .clubs.events import ClubEvents
 from .events.base import Events
 from .events.attend import EventsAttend
 
-# Maximum length of queries accepted.
-MAX_LENGTH: int = 100
-
 appserver.add_route(
     Students.as_view(), "/students/<uuid:strorempty>", strict_slashes=False
 )
@@ -36,6 +33,7 @@ appserver.add_route(
 )
 
 appserver.add_route(
-    EventsAttend.as_view(), "/events/<slug:str>/attend/<uuid:int>",
+    EventsAttend.as_view(),
+    "/events/<slug:str>/attend/<uuid:int>",
     strict_slashes=False,
 )
