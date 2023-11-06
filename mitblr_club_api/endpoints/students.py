@@ -35,7 +35,7 @@ class Students(HTTPMethodView):
 
         data: dict[str, bool | str]
         if student is None:
-            data = {"exists": "False"}
+            data = {"exists": "False", "message": "Student does not exist."}
         else:
             data = {
                 "exists": True,
@@ -71,7 +71,7 @@ class Students(HTTPMethodView):
             data = {
                 "status": 409,
                 "error": "Conflict",
-                "message": "Object already exists",
+                "message": "Object already exists.",
             }
 
             return json(data, status=409)
