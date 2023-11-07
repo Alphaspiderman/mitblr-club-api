@@ -2,22 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import datetime
-import logging
-from typing import (
-    Any,
-    Callable,
-    Coroutine,
-    Generic,
-    List,
-    Optional,
-    Type,
-    TypeVar,
-    Union,
-)
-
 import inspect
-
+import logging
 from collections.abc import Sequence
+from typing import Any, Callable, Coroutine, Generic, List, Optional, Type, TypeVar, Union
+
 from .backoff import ExponentialBackoff
 
 _log = logging.getLogger(__name__)
@@ -90,7 +79,7 @@ def compute_timedelta(dt: datetime.datetime) -> float:
 
 
 class SleepHandle:
-    __slots__ = ("future", "loop", "handle")
+    __slots__ = "future", "loop", "handle"
 
     def __init__(
         self, dt: datetime.datetime, *, loop: asyncio.AbstractEventLoop
@@ -159,7 +148,7 @@ class Loop(Generic[LF]):
 
         self.change_interval(seconds=seconds, minutes=minutes, hours=hours, time=time)
         self._last_iteration_failed = False
-        self._last_iteration: datetime.datetime = None
+        self._last_iteration: Optional[datetime.datetime] = None
         self._next_iteration = None
 
         if not inspect.iscoroutinefunction(self.coro):
@@ -215,16 +204,18 @@ class Loop(Generic[LF]):
                         self._is_explicit_time()
                         and self._next_iteration <= self._last_iteration
                     ):
-                        _log.warn(
+                        _log.warning(
                             (
                                 "Clock drift detected for task %s. Woke up at %s but needed to sleep until %s. "
                                 "Sleeping until %s again to correct clock"
                             ),
+
                             self.coro.__qualname__,
                             datetime.datetime.now(datetime.timezone.utc),
                             self._next_iteration,
                             self._next_iteration,
                         )
+
                         await self._try_sleep_until(self._next_iteration)
                         self._next_iteration = self._get_next_sleep_time()
 
@@ -429,7 +420,7 @@ class Loop(Generic[LF]):
         """
 
         def restart_when_over(
-            fut: Any, *, args: Any = args, kwargs: Any = kwargs
+            fut: Any, *, _args: Any = args, _kwargs: Any = kwargs
         ) -> None:
             if self._task:
                 self._task.remove_done_callback(restart_when_over)
