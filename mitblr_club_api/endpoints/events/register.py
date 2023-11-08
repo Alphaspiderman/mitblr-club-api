@@ -6,6 +6,8 @@ from sanic.views import HTTPMethodView
 
 from mitblr_club_api.decorators.authorized import authorized_incls
 
+from bson import ObjectId
+
 
 class EventsRegister(HTTPMethodView):
     """Endpoints regarding event registrations."""
@@ -65,4 +67,83 @@ class EventsRegister(HTTPMethodView):
                 "message": "Student is not registered for the event.",
             },
             status=404,
+        )
+
+    @authorized_incls
+    async def post(self, request: Request, slug: str, uuid: int):
+        """
+        Post a response that given an event slug and student application number, registers the student for
+        that event.
+
+        :param request: Sanic request.
+        :type request: Request
+        :param slug: Slug for the event.
+        :type slug: str
+        :param uuid: Application number of the student.
+        :type uuid: int
+
+        :return: JSON response with code 200 if the student is registered for the event. JSON response with
+                 code 404 if either the event, or the student is not found, or the student is not registered
+                 for the event. JSON response with code 409 if student is already registered for the event.
+        :rtype: JSONResponse
+        """
+
+        year = request.app.config["SORT_YEAR"]
+
+        students: AsyncIOMotorClient = request.app.ctx.db["students"]
+        events: AsyncIOMotorClient = request.app.ctx.db["events"]
+
+        event = await events.find_one({"slug": slug, "sort_year": year})
+
+        # Check if event exists
+        if not event:
+            return json(
+                {"status": 404, "error": "Not Found", "message": "No events found."},
+                status=404,
+            )
+
+        student = await students.find_one(
+            {"application_number": str(uuid)}, {"events": 1}
+        )
+
+        # Check if student exists
+        if not student:
+            return json(
+                {"status": 404, "error": "Not Found", "message": "No student found."},
+                status=404,
+            )
+
+        # Check if student is already registered
+        for student_event in student["events"]:
+            if student_event["event_id"] == event["_id"]:
+                return json(
+                    {
+                        "status": 200,
+                        "message": "Student is already registered for the event.",
+                    }
+                )
+
+        # Register student for event
+        await students.update_one(
+            {"application_number": str(uuid)},
+            {
+                "$push": {
+                    "events": {
+                        "event_id": event["_id"],
+                        "registration": "time",
+                        "sort_year:": request.app.config["SORT_YEAR"],
+                        "attended": False,
+                    }
+                }
+            },
+        )
+
+        # Update registered students in event collection
+        await events.update_one(
+            {"_id": event["_id"]},
+            {"$push": {"participants.registered": ObjectId(student["_id"])}},
+        )
+
+        return json(
+            {"status": 200, "message": "Student has been registered for event."}
         )

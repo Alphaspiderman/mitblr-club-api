@@ -80,9 +80,10 @@ class EventsAttend(HTTPMethodView):
         :param uuid: Application number of the student.
         :type uuid: int
 
-        :return: JSON response with code 200 if the student's attendance has been updated. JSON response
-                 with code 404 if either the event, or the student is not found, or the student's attendance
-                 could not be updated.
+        :return: JSON response with code 200 if the student's attendance has been updated or if registration
+                 is onspot. JSON response with code 404 if either the event, or the student is not found, or
+                 the student's attendance could not be updated. JSON response with code 409 if the student's
+                 attendance is already marked.
         :rtype: JSONResponse
         """
 
@@ -149,9 +150,37 @@ class EventsAttend(HTTPMethodView):
                 # TODO: Mark as on-spot registration.
                 pass
 
+        # Register student as onspot
+        await students.update_one(
+            {"application_number": str(uuid)},
+            {
+                "$push": {
+                    "events": {
+                        "event_id": event["_id"],
+                        "registration": "onspot",
+                        "sort_year:": request.app.config["SORT_YEAR"],
+                        "attended": True,
+                    }
+                }
+            },
+        )
+
+        # Update registered students in event collection
+        await events.update_one(
+            {"_id": event["_id"]},
+            {
+                "$push": {
+                    "participants.registered": ObjectId(student["_id"]),
+                    "participants.attended": ObjectId(student["_id"]),
+                }
+            },
+        )
+
         return json(
-            {"status": 404, "error": "Not Found", "message": "Update failed."},
-            status=404,
+            {
+                "status": 200,
+                "message": "Student has been been given onspot registration.",
+            }
         )
 
     # TODO - Data Validation
