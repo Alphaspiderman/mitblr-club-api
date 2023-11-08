@@ -31,7 +31,7 @@ class Students(HTTPMethodView):
         :rtype: JSONResponse
         """
 
-        student = await request.ctx.cache.get_student(int(uuid))
+        student = await request.app.ctx.cache.get_student(int(uuid))
 
         data: dict[str, bool | str]
         if student is None:
@@ -65,7 +65,7 @@ class Students(HTTPMethodView):
 
         collection: AsyncIOMotorClient = request.app.ctx.db["students"]
 
-        student = await request.ctx.cache.get_student(int(body.application_number))
+        student = await request.app.ctx.cache.get_student(int(body.application_number))
 
         if student is not None:
             data = {

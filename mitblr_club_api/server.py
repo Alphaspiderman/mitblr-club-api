@@ -183,7 +183,7 @@ async def login(request: Request, body: Login):
             json_payload = {"identifier": jwt_, "authenticated": True}
 
             # Fetch and cache team data.
-            await request.ctx.cache.fetch_team(jwt_data["team_id"])
+            await request.app.ctx.cache.fetch_team(jwt_data["team_id"])
 
         else:
             # If not verified, return error.

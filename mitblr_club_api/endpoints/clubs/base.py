@@ -89,7 +89,7 @@ class Clubs(HTTPMethodView):
 
         collection: AsyncIOMotorCollection = request.app.ctx.db["clubs"]
 
-        club = await request.ctx.cache.get_club(body.slug)
+        club = await request.app.ctx.cache.get_club(body.slug)
 
         # Making a new list to enter only the required fields into the faculty_advisors field.
         faculty_advisors = list()

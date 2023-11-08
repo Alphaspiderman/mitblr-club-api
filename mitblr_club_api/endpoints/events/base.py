@@ -25,7 +25,7 @@ class Events(HTTPMethodView):
 
         if event_slug == "":
             # Slug is empty, return the events in the next week.
-            events = await request.ctx.cache.get_event_by_timedelta(delta=7)
+            events = await request.app.ctx.cache.get_event_by_timedelta(delta=7)
 
             if events:
                 return json(
@@ -50,7 +50,7 @@ class Events(HTTPMethodView):
 
         else:
             # Return event info based on the slug.
-            event = await request.ctx.cache.get_event(event_slug)
+            event = await request.app.ctx.cache.get_event(event_slug)
 
             if event:
                 return json(
