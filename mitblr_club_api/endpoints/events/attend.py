@@ -15,8 +15,8 @@ class EventsAttend(HTTPMethodView):
     @authorized_incls
     async def get(self, request: Request, slug: str, uuid: int):
         """
-        Get a response that given an event slug and student application number, returns if the student is
-        signed up for that event or not.
+        Get a response that given an event slug and student application number, returns if the student
+        attended the event or not.
 
         :param request: Sanic request.
         :type request: Request
@@ -25,9 +25,9 @@ class EventsAttend(HTTPMethodView):
         :param uuid: Application number of the student.
         :type uuid: int
 
-        :return: JSON response with code 200 if the student is registered for the event. JSON response with
-                 code 404 if either the event, or the student is not found, or the student is not registered
-                 for the event.
+        :return: JSON response with code 200 if the student attended the event. JSON response with
+                 code 404 if either the event, or the student is not found, or if the student did
+                 not attend the event.
         :rtype: JSONResponse
         """
 
@@ -54,17 +54,15 @@ class EventsAttend(HTTPMethodView):
                 status=404,
             )
 
-        for student_event in student["events"]:
-            if student_event["event_id"] == event["_id"]:
-                return json(
-                    {"status": 200, "message": "Student is registered for the event."}
-                )
+        for id in event["participants"]["attended"]:
+            if id == student["_id"]:
+                return json({"status": 200, "message": "Student attended the event."})
 
         return json(
             {
                 "status": 404,
                 "error": "Not Found",
-                "message": "Student is not registered for the event.",
+                "message": "Student did not attend the event.",
             },
             status=404,
         )
