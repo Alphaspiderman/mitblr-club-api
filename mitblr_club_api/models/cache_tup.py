@@ -43,7 +43,7 @@ class Cache:
 
             if student_doc:
                 logger.debug(f"Cache Miss - Student - {student_id}")
-                student = Student()
+                student = Student(**student_doc)
                 self._student_cache[student_id] = student
             else:
                 return None
@@ -63,7 +63,7 @@ class Cache:
         )
 
         if student_doc:
-            student = Student()
+            student = Student(**student_doc)
             self._student_cache[student_id] = student
             return student
 
@@ -112,7 +112,7 @@ class Cache:
 
             if club_doc:
                 logger.debug(f"Cache Miss - Club - {club_id}")
-                club = Club()
+                club = Club(**club_doc)
                 self._club_cache[club_id] = club
             else:
                 return None
@@ -125,7 +125,7 @@ class Cache:
         club_doc = await self.db["clubs"].find_one({"slug": club_id})
 
         if club_doc:
-            club = Club()
+            club = Club(**club_doc)
             self._club_cache[club_id] = club
             return club
 
@@ -147,7 +147,7 @@ class Cache:
 
             if event_doc:
                 logger.debug(f"Cache Miss - Event - {event_id}")
-                event = Event()
+                event = Event(**event_doc)
                 self._event_cache[event_id] = event
             else:
                 return None
@@ -164,7 +164,7 @@ class Cache:
         )
 
         if event_doc:
-            event = Event()
+            event = Event(**event_doc)
             self._event_cache[event_id] = event
             return event
 

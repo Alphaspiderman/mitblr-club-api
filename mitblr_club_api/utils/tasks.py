@@ -5,7 +5,17 @@ import datetime
 import inspect
 import logging
 from collections.abc import Sequence
-from typing import Any, Callable, Coroutine, Generic, List, Optional, Type, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Coroutine,
+    Generic,
+    List,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+)
 
 from .backoff import ExponentialBackoff
 
@@ -209,7 +219,6 @@ class Loop(Generic[LF]):
                                 "Clock drift detected for task %s. Woke up at %s but needed to sleep until %s. "
                                 "Sleeping until %s again to correct clock"
                             ),
-
                             self.coro.__qualname__,
                             datetime.datetime.now(datetime.timezone.utc),
                             self._next_iteration,
