@@ -95,6 +95,7 @@ class Students(HTTPMethodView):
             "clubs": [ObjectId(id_) for id_ in body.clubs],
             "name": body.name,
             "mess_provider": body.mess_provider.value,
+            "events": [],
         }
 
         result = await collection.insert_one(student)
