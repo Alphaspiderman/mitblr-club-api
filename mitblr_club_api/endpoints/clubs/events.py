@@ -74,6 +74,7 @@ class ClubEvents(HTTPMethodView):
         data["sort_year"] = sort_year
         data["club"] = club_slug
         data["slug"] = event_slug
+        data["participants"] = {}
 
         result = await collection.insert_one(data)
 

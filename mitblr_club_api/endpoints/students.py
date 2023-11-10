@@ -87,6 +87,7 @@ class Students(HTTPMethodView):
             "phone_number": body.phone_number,
             "registration_number": body.registration_number,
             "clubs": [ObjectId(id_) for id_ in body.clubs],
+            "events": [],
             "name": body.name,
             "mess_provider": body.mess_provider.value,
         }
