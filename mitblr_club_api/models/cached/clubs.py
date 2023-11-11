@@ -11,7 +11,7 @@ class ClubCache(BaseModel):
     faculty_advisors: list[dict[str, str]]
     institution: str
     name: str
-    operations: list[ObjectId]
+    team: list[ObjectId]
     slug: str
     unit_type: Unit
 
