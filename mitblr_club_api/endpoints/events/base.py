@@ -3,6 +3,8 @@ from sanic.request import Request
 from sanic.response import json
 from sanic.views import HTTPMethodView
 
+from mitblr_club_api.models.internal.events import Event
+
 
 class Events(HTTPMethodView):
     """Endpoints regarding events."""
@@ -25,15 +27,15 @@ class Events(HTTPMethodView):
 
         if event_slug == "":
             # Slug is empty, return the events in the next week.
-            events = await request.app.ctx.cache.get_event_by_timedelta(delta=7)
+            events: Event = await request.app.ctx.cache.get_event_by_timedelta(delta=7)
 
             if events:
                 return json(
                     [
                         {
-                            "name": event["name"],
-                            "date": event["date"].isoformat(),
-                            "club": event["club"],
+                            "name": event.name,
+                            "date": event.date.isoformat(),
+                            "club": event.club.name,
                         }
                         for event in events
                     ]
@@ -50,14 +52,14 @@ class Events(HTTPMethodView):
 
         else:
             # Return event info based on the slug.
-            event = await request.app.ctx.cache.get_event(event_slug)
+            event: Event = await request.app.ctx.cache.get_event(event_slug)
 
             if event:
                 return json(
                     {
-                        "name": event["name"],
-                        "date": event["date"].isoformat(),
-                        "club": event["club"],
+                        "name": event.name,
+                        "date": event.date.isoformat(),
+                        "club": event.club.name,
                     }
                 )
             return json(

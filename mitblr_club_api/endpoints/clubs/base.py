@@ -7,6 +7,7 @@ from sanic.views import HTTPMethodView
 from sanic_ext import validate
 
 from mitblr_club_api.decorators.authorized import authorized_incls
+from mitblr_club_api.models.cached.clubs import ClubCache
 from mitblr_club_api.models.request.club import ClubRequest
 
 MAX_LENGTH = 100
@@ -31,7 +32,7 @@ class Clubs(HTTPMethodView):
 
         if club_slug == "":
             # Get all clubs.
-            clubs = await collection.find({}).to_list(length=MAX_LENGTH)
+            clubs: list[ClubCache] = request.app.ctx.cache.get_clubs()
 
             if clubs is None:
                 return json(
@@ -41,10 +42,10 @@ class Clubs(HTTPMethodView):
 
             club_list = [
                 {
-                    "club": club["name"],
-                    "slug": club["slug"],
-                    "unit": club["unit_type"],
-                    "institution": club["institution"],
+                    "club": club.name,
+                    "slug": club.slug,
+                    "unit": club.unit_type.name,
+                    "institution": club.institution,
                 }
                 for club in clubs
             ]
