@@ -21,8 +21,10 @@ class Cache:
 
         self._student_cache: TTLCache = TTLCache(maxsize=200, ttl=3600)
         self._team_cache: TTLCache = TTLCache(maxsize=100, ttl=2.5 * 3600)
-        self._club_cache: TTLCache = TTLCache(maxsize=100, ttl=3 * 3600)
-        self._event_cache: TTLCache = TTLCache(maxsize=25, ttl=3 * 3600)
+        self._club_cache: TTLCache = TTLCache(maxsize=100, ttl=3.5 * 3600)
+        self._event_cache: TTLCache = TTLCache(maxsize=25, ttl=3.5 * 3600)
+
+        # Note - Club and Events are Cached for 3.5h but refreshed every 3h
 
     async def get_student(self, student_id: int) -> Optional[StudentCache]:
         """Get the student from the cache (by UUID)."""
@@ -136,6 +138,14 @@ class Cache:
 
         return None
 
+    async def refresh_clubs(self):
+        """Refreshes the cache of clubs."""
+
+        clubs = await self.db["clubs"].find({}).to_list(length=1000)
+
+        for club in clubs:
+            self._club_cache[club["slug"]] = ClubCache(**club)
+
     async def get_event(self, event_id: str, year: int = None) -> Optional[EventCache]:
         """Get the event from the cache (by Slug)."""
         if year is None:
@@ -176,6 +186,14 @@ class Cache:
             return event
 
         return None
+
+    async def refresh_events(self):
+        """Refreshes the event cache."""
+        year = self.sort_year
+        events = await self.db["events"].find({"sort_year": str(year)}).to_list(1000)
+
+        for event_doc in events:
+            self._event_cache[event_doc["slug"]] = EventCache(**event_doc)
 
     async def get_event_by_timedelta(
         self, delta: int = 7

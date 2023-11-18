@@ -12,6 +12,7 @@ from .models.cache_tup import Cache
 from .models.request.login import Login
 from .utils import generate_jwt
 from .models.internal.team import Team
+from .utils import tasks
 
 # noinspection PyUnresolvedReferences
 # flake8: noqa
@@ -73,6 +74,7 @@ async def register_db(app: Sanic):
         app.ctx.db = client["mitblr-club-dev"]
 
     app.ctx.cache = Cache(app.ctx.db, sort_year=app.config["SORT_YEAR"])
+    ensure_cache.start(app)
 
 
 @app.listener("after_server_stop")
@@ -213,6 +215,16 @@ async def login(request: Request, body: Login):
             json_payload = {"identifier": app_id, "authenticated": False}
 
         return response.json(json_payload)
+
+
+@tasks.loop(hours=3)
+async def ensure_cache(app: Sanic):
+    """Task that runs each hour to ensure cache is populated with Events and Clubs"""
+    logger.info("Task running")
+    cache: Cache = app.ctx.cache
+
+    await cache.refresh_events()
+    await cache.refresh_clubs()
 
 
 if __name__ == "__main__":
