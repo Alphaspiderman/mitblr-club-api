@@ -4,7 +4,7 @@ from __future__ import annotations
 import random
 import time
 from numbers import Number
-from typing import Callable, Generic, Literal, TypeVar, overload, Union
+from typing import Callable, Generic, Literal, TypeVar, Union
 
 T = TypeVar("T", bool, Literal[True], Literal[False])
 
@@ -44,7 +44,7 @@ class ExponentialBackoff(Generic[T]):
 
         self._exp: int = 0
         self._max: int = 10
-        self._reset_time: int = base * 2**11
+        self._reset_time: int = base * 2 ** 11
         self._last_invocation: float = time.monotonic()
 
         # Use our own random instance to avoid messing with global one
@@ -55,19 +55,7 @@ class ExponentialBackoff(Generic[T]):
             rand.randrange if integral else rand.uniform
         )
 
-    @overload
-    def delay(self: ExponentialBackoff[Literal[False]]) -> float:
-        ...
-
-    @overload
-    def delay(self: ExponentialBackoff[Literal[True]]) -> int:
-        ...
-
-    @overload
     def delay(self: ExponentialBackoff[bool]) -> Number:
-        ...
-
-    def delay(self) -> Number:
         """
         Compute the next delay. If a period of more than base * 2^11 has
         passed since the last retry, the exponent is reset to 1.
@@ -86,4 +74,4 @@ class ExponentialBackoff(Generic[T]):
             self._exp = 0
 
         self._exp = min(self._exp + 1, self._max)
-        return self._randfunc(0, self._base * 2**self._exp)
+        return self._randfunc(0, self._base * 2 ** self._exp)
