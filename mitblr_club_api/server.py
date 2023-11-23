@@ -37,6 +37,7 @@ config.update({"IS_PROD": is_prod.lower() == "true"})
 
 app: Sanic = appserver
 app.config.update(config)
+app.config.PROXIES_COUNT = int(config.get("PROXIES_COUNT", 0))
 
 
 @app.listener("before_server_start")

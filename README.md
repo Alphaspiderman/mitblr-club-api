@@ -57,6 +57,7 @@ Make sure to set the following environment variables in your `.env` file:
 - `IS_PROD`: Determines the database connection and toggles `auto-reload` and `debug` in Sanic.
 - `SORT_YEAR`: Sets the sorting year for event documents in the database.
 - `HOST`: Used to add information about where the JWT was issued from, in case of multiple API instances.
+- `PROXIES_COUNT`: Used to set the number of trusted proxies in the connection
 
 ## Deployment (Production)
 
