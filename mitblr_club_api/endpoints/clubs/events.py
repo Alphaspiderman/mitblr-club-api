@@ -57,8 +57,8 @@ class ClubEvents(HTTPMethodView):
         # Check if event already exists based on event slug and sort year.
         collection: AsyncIOMotorCollection = request.app.ctx.db["events"]
 
-        event = await collection.find_one(
-            {"$and": [{"slug": event_slug}, {"sort_year": str(sort_year)}]}
+        event = await request.app.ctx.cache.get_event(
+            event_id=event_slug, year=sort_year
         )
 
         if event:
