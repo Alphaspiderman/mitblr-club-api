@@ -7,6 +7,7 @@ from sanic.views import HTTPMethodView
 from mitblr_club_api.decorators.authorized import authorized_incls
 from mitblr_club_api.models.cached.events import EventCache
 from mitblr_club_api.models.cached.students import StudentCache
+from mitblr_club_api.models.internal.students import Student
 
 
 class EventsAttend(HTTPMethodView):
@@ -32,11 +33,12 @@ class EventsAttend(HTTPMethodView):
         """
 
         year = request.app.config["SORT_YEAR"]
-
-        events = request.app.ctx.db["events"]
+        students = request.app.ctx.db["students"]
 
         # Unable to Cache due to attendance being on the object.
-        event: EventCache = await events.find_one({"slug": slug, "sort_year": year})
+        event: EventCache = await request.app.ctx.cache.get_event(
+            event_slug=slug, year=year
+        )
 
         if not event:
             return json(
@@ -44,7 +46,13 @@ class EventsAttend(HTTPMethodView):
                 status=404,
             )
 
-        student: StudentCache = await request.app.ctx.cache.get_student(uuid)
+        student: Student = Student(
+            **await students.find_one(
+                {
+                    "application_number": uuid,
+                }
+            )
+        )
 
         if not student:
             return json(
@@ -105,13 +113,19 @@ class EventsAttend(HTTPMethodView):
                 status=404,
             )
 
+        student_db = await students.find_one(
+            {
+                "application_number": student.application_number,
+            }
+        )
+
         event_id = event["_id"]
 
-        for event in student["events"]:
+        for event in student_db["events"]:
             if event["event_id"] == event_id:
                 # Match the specific event_id within the events array.
                 query = {
-                    "application_number": str(uuid),
+                    "application_number": student.application_number,
                     "events.event_id": event_id,
                 }
 
@@ -119,14 +133,11 @@ class EventsAttend(HTTPMethodView):
                 update = {"$set": {"events.$.attendance": "true"}}
 
                 await students.update_one(query, update)
+                # TODO: Update on event object in the events collection.
                 return json(
                     {"status": 200, "message": "Student attendance has been updated."}
                 )
-
-            # TODO: Update on event object in the events collection.
-            else:
-                # TODO: Mark as on-spot registration.
-                pass
+        # TODO: Mark as on-spot registration.
 
         return json(
             {"status": 404, "error": "Not Found", "message": "Update failed."},
