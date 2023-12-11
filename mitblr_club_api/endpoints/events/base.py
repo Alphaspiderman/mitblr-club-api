@@ -2,8 +2,7 @@
 from sanic.request import Request
 from sanic.response import json
 from sanic.views import HTTPMethodView
-
-from mitblr_club_api.models.internal.events import Event
+from mitblr_club_api.models.cached.events import EventCache
 
 
 class Events(HTTPMethodView):
@@ -27,7 +26,9 @@ class Events(HTTPMethodView):
 
         if event_slug == "":
             # Slug is empty, return the events in the next week.
-            events: Event = await request.app.ctx.cache.get_event_by_timedelta(delta=7)
+            events: list[
+                EventCache
+            ] = await request.app.ctx.cache.get_event_by_timedelta(delta=7)
 
             if events:
                 return json(
@@ -52,7 +53,7 @@ class Events(HTTPMethodView):
 
         else:
             # Return event info based on the slug.
-            event: Event = await request.app.ctx.cache.get_event(event_slug)
+            event: EventCache = await request.app.ctx.cache.get_event(event_slug)
 
             if event:
                 return json(
