@@ -44,9 +44,7 @@ class EventsRegister(HTTPMethodView):
                 status=404,
             )
 
-        student = await students.find_one(
-            {"application_number": str(uuid)}, {"events": 1}
-        )
+        student = await students.find_one({"application_number": uuid}, {"events": 1})
 
         if not student:
             return json(
@@ -102,9 +100,7 @@ class EventsRegister(HTTPMethodView):
                 status=404,
             )
 
-        student = await students.find_one(
-            {"application_number": str(uuid)}, {"events": 1}
-        )
+        student = await students.find_one({"application_number": uuid}, {"events": 1})
 
         # Check if student exists
         if not student:
@@ -125,7 +121,7 @@ class EventsRegister(HTTPMethodView):
 
         # Register student for event
         await students.update_one(
-            {"application_number": str(uuid)},
+            {"application_number": uuid},
             {
                 "$push": {
                     "events": {
@@ -146,4 +142,70 @@ class EventsRegister(HTTPMethodView):
 
         return json(
             {"status": 200, "message": "Student has been registered for event."}
+        )
+
+    # TODO - Scope Check (Operations Lead)
+    @authorized_incls
+    async def delete(self, request: Request, slug: str, uuid: int):
+        """Deletion of Registrations"""
+
+        year = request.app.config["SORT_YEAR"]
+
+        students: AsyncIOMotorClient = request.app.ctx.db["students"]
+        events: AsyncIOMotorClient = request.app.ctx.db["events"]
+
+        event = await events.find_one({"slug": slug, "sort_year": year})
+
+        # Check if event exists
+        if not event:
+            return json(
+                {"status": 404, "error": "Not Found", "message": "No events found."},
+                status=404,
+            )
+
+        student = await students.find_one({"application_number": uuid}, {"events": 1})
+
+        # Check if student exists
+        if not student:
+            return json(
+                {"status": 404, "error": "Not Found", "message": "No student found."},
+                status=404,
+            )
+
+        # Check if student is registered
+        for student_event in student["events"]:
+            if student_event["event_id"] == event["_id"]:
+                # Remove student from event
+                await students.update_one(
+                    {"application_number": uuid},
+                    {"$pull": {"events": {"event_id": event["_id"]}}},
+                )
+
+                # Update registered students in event collection
+
+                # Delete from registered
+                await events.update_one(
+                    {"_id": event["_id"]},
+                    {"$pull": {"participants.registered": ObjectId(student["_id"])}},
+                )
+
+                # Delete from attended
+                await events.update_one(
+                    {"_id": event["_id"]},
+                    {"$pull": {"participants.attended": ObjectId(student["_id"])}},
+                )
+
+                return json(
+                    {
+                        "status": 200,
+                        "message": "Student has been unregistered from event.",
+                    }
+                )
+
+        return json(
+            {
+                "status": 404,
+                "error": "Not Found",
+                "message": "Student is not registered for the event.",
+            },
         )
