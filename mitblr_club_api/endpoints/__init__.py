@@ -9,6 +9,7 @@ from .clubs.events import ClubEvents
 
 from .events.base import Events
 from .events.attend import EventsAttend
+from .events.register import EventsRegister
 
 appserver.add_route(
     Students.as_view(), "/students/<uuid:strorempty>", strict_slashes=False
@@ -35,5 +36,11 @@ appserver.add_route(
 appserver.add_route(
     EventsAttend.as_view(),
     "/events/<slug:str>/attend/<uuid:int>",
+    strict_slashes=False,
+)
+
+appserver.add_route(
+    EventsRegister.as_view(),
+    "/events/<slug:str>/register/<uuid:int>",
     strict_slashes=False,
 )
