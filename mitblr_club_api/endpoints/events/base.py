@@ -2,6 +2,7 @@
 from sanic.request import Request
 from sanic.response import json
 from sanic.views import HTTPMethodView
+
 from mitblr_club_api.models.cached.events import EventCache
 
 

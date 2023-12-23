@@ -1,12 +1,11 @@
 """API endpoints for events registrations."""
+from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 from sanic.request import Request
 from sanic.response import json
 from sanic.views import HTTPMethodView
 
 from mitblr_club_api.decorators.authorized import authorized_incls
-
-from bson import ObjectId
 
 
 class EventsRegister(HTTPMethodView):

@@ -1,15 +1,12 @@
 """Package for API endpoints."""
 from mitblr_club_api.app import appserver
-
-from .students import Students
-
 from .clubs.base import Clubs
 from .clubs.core import ClubsCore
 from .clubs.events import ClubEvents
-
-from .events.base import Events
 from .events.attend import EventsAttend
+from .events.base import Events
 from .events.register import EventsRegister
+from .students import Students
 
 appserver.add_route(
     Students.as_view(), "/students/<uuid:strorempty>", strict_slashes=False

@@ -1,15 +1,15 @@
 """API endpoints for club core committees."""
 from typing import Optional
-from bson import ObjectId
 
+from bson import ObjectId
+from motor.motor_asyncio import AsyncIOMotorCollection
 from sanic import Request, json
 from sanic.views import HTTPMethodView
 from sanic_ext import validate
-from motor.motor_asyncio import AsyncIOMotorCollection
 
 from mitblr_club_api.decorators.authorized import authorized_incls
-from mitblr_club_api.models.request.team import ClubTeamRequest
 from mitblr_club_api.models.enums.core_committee import CoreCommittee
+from mitblr_club_api.models.request.team import ClubTeamRequest
 
 MAX_LENGTH = 100
 

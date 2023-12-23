@@ -1,8 +1,8 @@
 """
 ClubTeam document model.
 """
-from pydantic import BaseModel
 from bson import ObjectId
+from pydantic import BaseModel
 
 
 class TeamCache(BaseModel):

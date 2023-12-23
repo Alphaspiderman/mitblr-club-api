@@ -1,4 +1,5 @@
 """API endpoints for events attendance."""
+from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 from sanic.request import Request
 from sanic.response import json
@@ -9,8 +10,6 @@ from mitblr_club_api.models.cached.events import EventCache
 
 # from mitblr_club_api.models.cached.students import StudentCache
 from mitblr_club_api.models.internal.students import Student
-
-from bson import ObjectId
 
 
 class EventsAttend(HTTPMethodView):
