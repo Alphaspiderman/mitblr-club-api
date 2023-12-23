@@ -1,4 +1,4 @@
-"""API endpoints for events attendance."""
+"""API endpoints for events registrations."""
 from motor.motor_asyncio import AsyncIOMotorClient
 from sanic.request import Request
 from sanic.response import JSONResponse, json
@@ -9,14 +9,14 @@ from mitblr_club_api.decorators.authorized import authorized_incls
 from bson import ObjectId
 
 
-class EventsAttend(HTTPMethodView):
-    """Endpoints regarding event attendance."""
+class EventsRegister(HTTPMethodView):
+    """Endpoints regarding event registrations."""
 
     @authorized_incls
     async def get(self, request: Request, slug: str, uuid: int):
         """
-        Get a response that given an event slug and student application number, returns if the student
-        attended the event or not.
+        Get a response that given an event slug and student application number, returns if the student is
+        signed up for that event or not.
 
         :param request: Sanic request.
         :type request: Request
@@ -25,9 +25,9 @@ class EventsAttend(HTTPMethodView):
         :param uuid: Application number of the student.
         :type uuid: int
 
-        :return: JSON response with code 200 if the student attended the event. JSON response with
-                 code 404 if either the event, or the student is not found, or if the student did
-                 not attend the event.
+        :return: JSON response with code 200 if the student is registered for the event. JSON response with
+                 code 404 if either the event, or the student is not found, or the student is not registered
+                 for the event.
         :rtype: JSONResponse
         """
 
@@ -52,112 +52,83 @@ class EventsAttend(HTTPMethodView):
                 status=404,
             )
 
-        for id in event["participants"]["attended"]:
-            if id == student["_id"]:
-                return json({"status": 200, "message": "Student attended the event."})
+        for student_event in student["events"]:
+            if student_event["event_id"] == event["_id"]:
+                return json(
+                    {"status": 200, "message": "Student is registered for the event."}
+                )
 
         return json(
             {
                 "status": 404,
                 "error": "Not Found",
-                "message": "Student did not attend the event.",
+                "message": "Student is not registered for the event.",
             },
             status=404,
         )
 
-    # TODO: Data validation.
     @authorized_incls
     async def post(self, request: Request, slug: str, uuid: int):
         """
-        Mark the attendance of an event attendee with an event slug and student application number.
+        Post a response that given an event slug and student application number, registers the student for
+        that event.
 
         :param request: Sanic request.
         :type request: Request
         :param slug: Slug for the event.
-        :type slug: are
+        :type slug: str
         :param uuid: Application number of the student.
         :type uuid: int
 
-        :return: JSON response with code 200 if the student's attendance has been updated or if registration
-                 is onspot. JSON response with code 404 if either the event, or the student is not found, or
-                 the student's attendance could not be updated. JSON response with code 409 if the student's
-                 attendance is already marked.
+        :return: JSON response with code 200 if the student is registered for the event. JSON response with
+                 code 404 if either the event, or the student is not found, or the student is not registered
+                 for the event. JSON response with code 409 if student is already registered for the event.
         :rtype: JSONResponse
         """
+
+        year = request.app.config["SORT_YEAR"]
 
         students: AsyncIOMotorClient = request.app.ctx.db["students"]
         events: AsyncIOMotorClient = request.app.ctx.db["events"]
 
-        event = await events.find_one({"slug": slug})
+        event = await events.find_one({"slug": slug, "sort_year": year})
 
-        # Checking if event exists
+        # Check if event exists
         if not event:
             return json(
                 {"status": 404, "error": "Not Found", "message": "No events found."},
                 status=404,
             )
 
-        # TODO - Timed Cache
-        student = await students.find_one({"application_number": uuid})
+        student = await students.find_one({"application_number": uuid}, {"events": 1})
 
-        # Checking if student exists
+        # Check if student exists
         if not student:
             return json(
                 {"status": 404, "error": "Not Found", "message": "No student found."},
                 status=404,
             )
 
-        event_id = event["_id"]
-
-        # Checking if student attendance is already marked
-        for attendee in event["participants"]["attended"]:
-            if attendee == student["_id"]:
+        # Check if student is already registered
+        for student_event in student["events"]:
+            if student_event["event_id"] == event["_id"]:
                 return json(
                     {
-                        "status": 409,
-                        "error": "Conflict",
-                        "message": "Student attendance is already marked.",
-                    },
-                    status=409,
+                        "status": 200,
+                        "message": "Student is already registered for the event.",
+                    }
                 )
 
-        # Updating attendance in events field in student document in students collection
-        for event in student["events"]:
-            if event["event_id"] == event_id:
-                # Match the specific event_id within the events array.
-                query = {
-                    "application_number": str(uuid),
-                    "events.event_id": event_id,
-                }
-
-                # Update the attendance field of the matched element.
-                update = {"$set": {"events.$.attended": True}}
-
-                await students.update_one(query, update)
-
-                # Update on event object in the events collection.
-                await events.update_one(
-                    {"_id": event_id},
-                    {"$push": {"participants.attended": ObjectId(student["_id"])}},
-                )
-                return json(
-                    {"status": 200, "message": "Student attendance has been updated."}
-                )
-
-            else:
-                # TODO: Mark as on-spot registration.
-                pass
-
-        # Register student as onspot
+        # Register student for event
         await students.update_one(
             {"application_number": uuid},
             {
                 "$push": {
                     "events": {
-                        "event_id": event_id,
-                        "registration": "onspot",
+                        "event_id": event["_id"],
+                        "registration": "time",
                         "sort_year:": request.app.config["SORT_YEAR"],
-                        "attended": True,
+                        "attended": False,
                     }
                 }
             },
@@ -165,32 +136,18 @@ class EventsAttend(HTTPMethodView):
 
         # Update registered students in event collection
         await events.update_one(
-            {"_id": event_id},
-            {
-                "$push": {
-                    "participants.registered": ObjectId(student["_id"]),
-                    "participants.attended": ObjectId(student["_id"]),
-                }
-            },
+            {"_id": event["_id"]},
+            {"$push": {"participants.registered": ObjectId(student["_id"])}},
         )
 
         return json(
-            {
-                "status": 200,
-                "message": "Student has been been given onspot registration.",
-            }
+            {"status": 200, "message": "Student has been registered for event."}
         )
-
-    # TODO - Data Validation
-    # TODO - Scope Check (Club Core / Operations Lead)
-    @authorized_incls
-    async def patch(self, request: Request, slug: str, uuid: int):
-        """Update Attendance of attendee"""
 
     # TODO - Scope Check (Operations Lead)
     @authorized_incls
     async def delete(self, request: Request, slug: str, uuid: int):
-        """Deletion of Attendance"""
+        """Deletion of Registrations"""
 
         year = request.app.config["SORT_YEAR"]
 
@@ -218,13 +175,19 @@ class EventsAttend(HTTPMethodView):
         # Check if student is registered
         for student_event in student["events"]:
             if student_event["event_id"] == event["_id"]:
-                # Update attendance in student collection
+                # Remove student from event
                 await students.update_one(
                     {"application_number": uuid},
-                    {"$set": {"events.$[].attended": False}},
+                    {"$pull": {"events": {"event_id": event["_id"]}}},
                 )
 
-                # Update attendeded students in event collection
+                # Update registered students in event collection
+
+                # Delete from registered
+                await events.update_one(
+                    {"_id": event["_id"]},
+                    {"$pull": {"participants.registered": ObjectId(student["_id"])}},
+                )
 
                 # Delete from attended
                 await events.update_one(
@@ -233,13 +196,16 @@ class EventsAttend(HTTPMethodView):
                 )
 
                 return json(
-                    {"status": 200, "message": "Student attendance removed from event."}
+                    {
+                        "status": 200,
+                        "message": "Student has been unregistered from event.",
+                    }
                 )
 
         return json(
             {
                 "status": 404,
                 "error": "Not Found",
-                "message": "Student is not attending the event.",
+                "message": "Student is not registered for the event.",
             },
         )

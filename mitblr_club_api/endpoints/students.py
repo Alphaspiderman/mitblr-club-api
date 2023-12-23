@@ -83,7 +83,7 @@ class Students(HTTPMethodView):
             return json(data, status=409)
 
         student: dict[str, Any] = {
-            "application_number": body.application_number,
+            "application_number": str(body.application_number),
             "email": body.email,
             "institution": body.institution,
             "academic": {
@@ -95,6 +95,7 @@ class Students(HTTPMethodView):
             "clubs": [ObjectId(id_) for id_ in body.clubs],
             "name": body.name,
             "mess_provider": body.mess_provider.value,
+            "events": [],
         }
 
         result = await collection.insert_one(student)
