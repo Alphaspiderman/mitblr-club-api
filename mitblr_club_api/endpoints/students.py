@@ -10,7 +10,7 @@ from sanic.views import HTTPMethodView
 from sanic_ext import validate
 
 from mitblr_club_api.decorators.authorized import authorized_incls
-from mitblr_club_api.models.cached.students import StudentCache
+from mitblr_club_api.models.internal.students import Student
 from mitblr_club_api.models.request.student import StudentRequest
 
 
@@ -32,7 +32,7 @@ class Students(HTTPMethodView):
         :rtype: JSONResponse
         """
 
-        student: StudentCache = await request.app.ctx.cache.get_student(int(uuid))
+        student: Student = await request.app.ctx.cache.get_student(int(uuid))
 
         data: dict[str, bool | str]
         if student is None:

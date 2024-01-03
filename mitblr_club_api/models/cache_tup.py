@@ -10,8 +10,8 @@ from sanic.log import logger
 
 from mitblr_club_api.models.cached.clubs import ClubCache
 from mitblr_club_api.models.cached.events import EventCache
-from mitblr_club_api.models.cached.students import StudentCache
 from mitblr_club_api.models.cached.team import TeamCache
+from mitblr_club_api.models.internal.students import Student
 
 
 class Cache:
@@ -26,7 +26,7 @@ class Cache:
 
         # Note - Club and Events are Cached for 3.5h but refreshed every 3h
 
-    async def get_student(self, student_id: int) -> Optional[StudentCache]:
+    async def get_student(self, student_id: int) -> Optional[Student]:
         """Get the student from the cache (by UUID)."""
 
         student = self._student_cache.get(student_id)
@@ -45,14 +45,14 @@ class Cache:
 
             if student_doc:
                 logger.debug(f"Cache Miss - Student - {student_id}")
-                student = StudentCache(**student_doc)
+                student = Student(**student_doc)
                 self._student_cache[student_id] = student
             else:
                 return None
 
         return student
 
-    async def fetch_student(self, student_id: int) -> Optional[StudentCache]:
+    async def fetch_student(self, student_id: int) -> Optional[Student]:
         """Fetch the student from the database (by UUID) and saves to cache."""
 
         student_doc = await self.db["students"].find_one(
@@ -65,7 +65,7 @@ class Cache:
         )
 
         if student_doc:
-            student = StudentCache(**student_doc)
+            student = Student(**student_doc)
             self._student_cache[student_id] = student
             return student
 
@@ -193,6 +193,8 @@ class Cache:
         events = await self.db["events"].find({"sort_year": str(year)}).to_list(1000)
 
         for event_doc in events:
+            # Renaming _id to id else pydantic will throw an error on trying to get the id field later.
+            event_doc["id"] = event_doc["_id"]
             self._event_cache[event_doc["slug"]] = EventCache(**event_doc)
 
     async def get_event_by_timedelta(
