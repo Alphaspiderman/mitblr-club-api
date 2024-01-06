@@ -1,7 +1,7 @@
 """The name dictionary used for holding the different caches."""
 
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Union
 
 from bson import ObjectId
 from cachetools import TTLCache
@@ -26,7 +26,7 @@ class Cache:
 
         # Note - Club and Events are Cached for 3.5h but refreshed every 3h
 
-    async def get_student(self, student_id: int) -> Optional[Student]:
+    async def get_student(self, student_id: Union[str, int]) -> Optional[Student]:
         """Get the student from the cache (by UUID)."""
 
         student = self._student_cache.get(student_id)
@@ -34,6 +34,38 @@ class Cache:
         if student:
             logger.debug(f"Cache Hit - Student - {student_id}")
         else:
+            # Try to convert the student_id to an integer
+            try:
+                student_id = int(student_id)
+                student_doc = await self.db["students"].find_one(
+                    {
+                        "$or": [
+                            {"application_number": student_id},
+                            {"registration_number": student_id},
+                        ]
+                    }
+                )
+
+            except ValueError:
+                student_doc = await self.db["students"].find_one(
+                    {"email": student_id.lower()}
+                )
+
+            if student_doc:
+                logger.debug(f"Cache Miss - Student - {student_id}")
+                student = Student(**student_doc)
+                self._student_cache[student.email] = student
+            else:
+                return None
+
+        return student
+
+    async def fetch_student(self, student_id: Union[int, str]) -> Optional[Student]:
+        """Fetch the student from the database (by UUID) and saves to cache."""
+
+        # Try to convert the student_id to an integer
+        try:
+            student_id = int(student_id)
             student_doc = await self.db["students"].find_one(
                 {
                     "$or": [
@@ -43,30 +75,15 @@ class Cache:
                 }
             )
 
-            if student_doc:
-                logger.debug(f"Cache Miss - Student - {student_id}")
-                student = Student(**student_doc)
-                self._student_cache[student_id] = student
-            else:
-                return None
-
-        return student
-
-    async def fetch_student(self, student_id: int) -> Optional[Student]:
-        """Fetch the student from the database (by UUID) and saves to cache."""
-
-        student_doc = await self.db["students"].find_one(
-            {
-                "$or": [
-                    {"application_number": student_id},
-                    {"registration_number": student_id},
-                ]
-            }
-        )
+        except ValueError:
+            student_doc = await self.db["students"].find_one(
+                {"email": student_id.lower()}
+            )
 
         if student_doc:
             student = Student(**student_doc)
-            self._student_cache[student_id] = student
+
+            self._student_cache[student.email] = student
             return student
 
         return None
