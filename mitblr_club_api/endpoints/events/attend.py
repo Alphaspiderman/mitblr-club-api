@@ -5,10 +5,10 @@ from sanic.request import Request
 from sanic.response import json
 from sanic.views import HTTPMethodView
 
+# from sanic.log import logger
+
 from mitblr_club_api.decorators.authorized import authorized_incls
 from mitblr_club_api.models.cached.events import EventCache
-
-# from mitblr_club_api.models.cached.students import StudentCache
 from mitblr_club_api.models.internal.students import Student
 
 
@@ -34,13 +34,9 @@ class EventsAttend(HTTPMethodView):
         :rtype: JSONResponse
         """
 
-        year = request.app.config["SORT_YEAR"]
-        students = request.app.ctx.db["students"]
+        # year = request.app.config["SORT_YEAR"]
 
-        # Unable to Cache due to attendance being on the object.
-        event: EventCache = await request.app.ctx.cache.get_event(
-            event_slug=slug, year=year
-        )
+        event: EventCache = await request.app.ctx.cache.get_event(slug)
 
         if not event:
             return json(
@@ -48,14 +44,7 @@ class EventsAttend(HTTPMethodView):
                 status=404,
             )
 
-        student = await students.find_one({"application_number": uuid}, {"events": 1})
-        student: Student = Student(
-            **await students.find_one(
-                {
-                    "application_number": uuid,
-                }
-            )
-        )
+        student: Student = await request.app.ctx.cache.get_student(student_id=uuid)
 
         if not student:
             return json(
@@ -63,18 +52,24 @@ class EventsAttend(HTTPMethodView):
                 status=404,
             )
 
-        for id in event["participants"]["attended"]:
-            if id == student["_id"]:
-                return json({"status": 200, "message": "Student attended the event."})
-
-        return json(
-            {
-                "status": 404,
-                "error": "Not Found",
-                "message": "Student did not attend the event.",
-            },
-            status=404,
-        )
+        for event in student.events:
+            if event.event_id == event["_id"]:
+                if event.attended:
+                    return json(
+                        {
+                            "status": 200,
+                            "message": "Student attended the event.",
+                        }
+                    )
+                else:
+                    return json(
+                        {
+                            "status": 404,
+                            "error": "Not Found",
+                            "message": "Student did not attend the event.",
+                        },
+                        status=404,
+                    )
 
     # TODO: Data validation.
     @authorized_incls
@@ -109,8 +104,7 @@ class EventsAttend(HTTPMethodView):
                 status=404,
             )
 
-        # TODO - Timed Cache
-        student = await students.find_one({"application_number": uuid})
+        student: Student = await request.app.ctx.cache.get_student(student_id=uuid)
 
         # Checking if student exists
         if not student:
@@ -118,12 +112,6 @@ class EventsAttend(HTTPMethodView):
                 {"status": 404, "error": "Not Found", "message": "No student found."},
                 status=404,
             )
-
-        # student_db = await students.find_one(
-        #     {
-        #         "application_number": student.application_number,
-        #     }
-        # )
 
         event_id = event["_id"]
 
@@ -139,34 +127,43 @@ class EventsAttend(HTTPMethodView):
                     status=409,
                 )
 
-        # Updating attendance in events field in student document in students collection
-        for event in student["events"]:
-            if event["event_id"] == event_id:
-                # Match the specific event_id within the events array.
-                query = {
-                    "application_number": student.application_number,
-                    "events.event_id": event_id,
-                }
+        for event in student.events:
+            if event.event_id == event["_id"]:
+                # Student is registered
+                if event.attended:
+                    return json(
+                        {
+                            "status": 409,
+                            "error": "Conflict",
+                            "message": "Student attendance is already marked.",
+                        },
+                        status=409,
+                    )
+                else:
+                    # Updating attendance in events field in student document in students collection
+                    # Match the specific event_id within the events array.
+                    query = {
+                        "application_number": student.application_number,
+                        "events.event_id": event_id,
+                    }
 
-                # Update the attendance field of the matched element.
-                update = {"$set": {"events.$.attended": True}}
+                    # Update the attendance field of the matched element.
+                    update = {"$set": {"events.$.attended": True}}
 
-                await students.update_one(query, update)
+                    await students.update_one(query, update)
 
-                # Update on event object in the events collection.
-                await events.update_one(
-                    {"_id": event_id},
-                    {"$push": {"participants.attended": ObjectId(student["_id"])}},
-                )
-                return json(
-                    {"status": 200, "message": "Student attendance has been updated."}
-                )
-
-            else:
-                # TODO: Mark as on-spot registration.
-                pass
-
-        # Register student as onspot
+                    # Update on event object in the events collection.
+                    await events.update_one(
+                        {"_id": event_id},
+                        {"$push": {"participants.attended": ObjectId(student["_id"])}},
+                    )
+                    return json(
+                        {
+                            "status": 200,
+                            "message": "Student attendance has been updated.",
+                        }
+                    )
+        # Student is not registered so register them as onspot
         await students.update_one(
             {"application_number": uuid},
             {
@@ -199,23 +196,16 @@ class EventsAttend(HTTPMethodView):
             }
         )
 
-    # TODO - Data Validation
-    # TODO - Scope Check (Club Core / Operations Lead)
-    @authorized_incls
-    async def patch(self, request: Request, slug: str, uuid: int):
-        """Update Attendance of attendee"""
-
     # TODO - Scope Check (Operations Lead)
     @authorized_incls
     async def delete(self, request: Request, slug: str, uuid: int):
         """Deletion of Attendance"""
 
-        year = request.app.config["SORT_YEAR"]
-
         students: AsyncIOMotorClient = request.app.ctx.db["students"]
         events: AsyncIOMotorClient = request.app.ctx.db["events"]
 
-        event = await events.find_one({"slug": slug, "sort_year": year})
+        # Can used cached event object due to no data modification.
+        event: EventCache = await request.app.ctx.cache.get_event(slug)
 
         # Check if event exists
         if not event:
@@ -224,7 +214,7 @@ class EventsAttend(HTTPMethodView):
                 status=404,
             )
 
-        student = await students.find_one({"application_number": uuid}, {"events": 1})
+        student: Student = await request.app.ctx.cache.get_student(student_id=uuid)
 
         # Check if student exists
         if not student:
@@ -234,7 +224,7 @@ class EventsAttend(HTTPMethodView):
             )
 
         # Check if student is registered
-        for student_event in student["events"]:
+        for student_event in student.events:
             if student_event["event_id"] == event["_id"]:
                 # Update attendance in student collection
                 await students.update_one(
