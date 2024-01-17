@@ -1,6 +1,10 @@
 """Package for API endpoints."""
 from mitblr_club_api.app import appserver
 
+from .auth.external import ExternalAuth
+from .auth.internal import InternalAuth
+from .auth.callback import ExternalAuthCallback
+
 from .students import Students
 
 from .clubs.base import Clubs
@@ -37,3 +41,9 @@ appserver.add_route(
     "/events/<slug:str>/attend/<uuid:int>",
     strict_slashes=False,
 )
+
+appserver.add_route(ExternalAuth.as_view(), "/auth/external", strict_slashes=False)
+appserver.add_route(
+    ExternalAuthCallback.as_view(), "/auth/callback", strict_slashes=False
+)
+appserver.add_route(InternalAuth.as_view(), "/auth/internal", strict_slashes=False)

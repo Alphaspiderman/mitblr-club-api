@@ -3,14 +3,14 @@ import jwt
 
 import motor.motor_asyncio as async_motor
 from dotenv import dotenv_values
-from sanic import Request, Sanic, response, json
+from sanic import Request, Sanic, response
 from sanic.log import logger
-from sanic_ext import validate
+import aiohttp
+import json
 
 from .app import appserver
 from .models.cache_tup import Cache
 from .models.request.login import Login
-from .utils import generate_jwt
 from .models.internal.team import Team
 from .utils import tasks
 
@@ -41,7 +41,7 @@ app.config.PROXIES_COUNT = int(config.get("PROXIES_COUNT", 0))
 
 
 @app.listener("before_server_start")
-async def register_db(app: Sanic):
+async def setup_app(app: Sanic):
     logger.info("Connecting to MongoDB.")
     connection = app.config.get("MONGO_CONNECTION_URI")
 
@@ -75,6 +75,41 @@ async def register_db(app: Sanic):
         app.ctx.db = client["mitblr-club-dev"]
 
     app.ctx.cache = Cache(app.ctx.db, sort_year=app.config["SORT_YEAR"])
+
+    app.ctx.tokens = {}
+
+    logger.info("Fetching OpenID Configuration of Entra")
+
+    # Fetch OpenID Configuration of Entra from https://login.microsoftonline.com/common/.well-known/openid-configuration
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            "https://login.microsoftonline.com/common/.well-known/openid-configuration"
+        ) as resp:
+            config = await resp.json()
+            jwks_uri = config["jwks_uri"]
+
+    logger.info(
+        "Fetching JSON Web Key Set (JWKS) from the OpenID Configuration of Entra"
+    )
+
+    # Fetch the JSON Web Key Set (JWKS) from the OpenID Configuration of Entra
+    async with aiohttp.ClientSession() as session:
+        async with session.get(jwks_uri) as resp:
+            jwks = await resp.json()
+
+    logger.info("Saving public keys from the JWKS")
+
+    # Create a dictionary of public keys from the JWKS
+    public_keys = {}
+    for jwk in jwks["keys"]:
+        kid = jwk["kid"]
+        public_keys[kid] = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(jwk))
+
+    logger.info("Saving public keys to the app context")
+    app.ctx.public_keys = public_keys
+    logger.info("Starting task to ensure cache is populated with Events and Clubs")
+
+    # Ensure cache is populated with Events and Clubs
     ensure_cache.start(app)
 
 
@@ -127,95 +162,6 @@ async def jwt_status(request: Request):
         status = 200
 
     return response.json(d, status=status)
-
-
-@app.post("/login")
-@validate(json=Login)
-async def login(request: Request, body: Login):
-    status = 200
-
-    if body.auth_type == "USER":
-        user = body.identifier
-        password = body.secret
-
-        collection = request.app.ctx.db["authentication"]
-        doc = await collection.find_one({"auth_type": "USER", "username": user})
-
-        # Check if user exists
-        if doc is None:
-            return json(
-                {
-                    "authenticated": False,
-                    "message": "User not found",
-                    "error": "Not Found",
-                },
-                status=404,
-            )
-
-        password_hash = doc.get("password_hash")
-
-        # We are not sure if we are going to be omitting the password_hash field on the
-        # document or setting the field as empty. So we check for both cases.
-        if password_hash is None or password_hash == b"":
-            # Operations team password setup.
-            # Generate a hash for the password and store it in the database
-            password_hash = bcrypt.hashpw(password.encode(), salt=bcrypt.gensalt())
-
-            # Upsert password hash to MongoDB.
-            await collection.update_one(
-                {"auth_type": "USER", "username": user},
-                {"$set": {"password_hash": password_hash}},
-                upsert=True,
-            )
-
-            # Set verified to True (only for first time login).
-            verified = True
-        else:
-            # Verify the password for existing users.
-            verified = bcrypt.checkpw(password.encode(), password_hash)
-
-        # If verified, generate JWT.
-        if verified:
-            jwt_data = {
-                "auth_id": str(doc["_id"]),
-                "student_id": str(doc["student_id"]),
-                "team_id": str(doc["team_id"]),
-            }
-
-            jwt_ = await generate_jwt(app=request.app, data=jwt_data, validity=90)
-            json_payload = {"identifier": jwt_, "authenticated": True}
-
-            # Fetch and cache team data.
-            await request.app.ctx.cache.fetch_team(jwt_data["team_id"])
-
-        else:
-            # If not verified, return error.
-            json_payload = {
-                "authenticated": False,
-                "message": "Incorrect password",
-                "error": "Unauthorized",
-            }
-
-            status = 401
-
-        return response.json(json_payload, status=status)
-
-    if body.auth_type == "AUTOMATION":
-        app_id = body.identifier
-        token = body.secret
-
-        collection = request.app.ctx.db["authentication"]
-        doc = await collection.find_one({"auth_type": "AUTOMATION", "app_id": app_id})
-
-        if bcrypt.checkpw(token.encode(), doc["token"]):
-            # TODO - Add useful data
-            jwt_data = {"username": app_id}
-            jwt_ = await generate_jwt(app=request.app, data=jwt_data, validity=1440)
-            json_payload = {"identifier": jwt_, "authenticated": True}
-        else:
-            json_payload = {"identifier": app_id, "authenticated": False}
-
-        return response.json(json_payload)
 
 
 @tasks.loop(hours=3)
