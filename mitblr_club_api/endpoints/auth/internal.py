@@ -63,7 +63,9 @@ class InternalAuth(HTTPMethodView):
                     "team_id": str(doc["team_id"]),
                 }
 
-                jwt_ = await generate_jwt(app=request.app, data=jwt_data, validity=90)
+                jwt_ = await generate_jwt(
+                    app=request.app, data=jwt_data, validity=90, target="external"
+                )
                 json_payload = {"identifier": jwt_, "authenticated": True}
 
                 # Fetch and cache team data.
@@ -93,7 +95,9 @@ class InternalAuth(HTTPMethodView):
             if bcrypt.checkpw(token.encode(), doc["token"]):
                 # TODO - Add useful data
                 jwt_data = {"username": app_id}
-                jwt_ = await generate_jwt(app=request.app, data=jwt_data, validity=1440)
+                jwt_ = await generate_jwt(
+                    app=request.app, data=jwt_data, validity=1440, target="automation"
+                )
                 json_payload = {"identifier": jwt_, "authenticated": True}
             else:
                 json_payload = {"identifier": app_id, "authenticated": False}
