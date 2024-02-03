@@ -1,7 +1,7 @@
 """API endpoints for callbacks from external (MS-Entra) authentication provider."""
 import jwt
 
-from sanic import Request, json
+from sanic import Request, json, redirect
 from sanic.log import logger
 from sanic.views import HTTPMethodView
 
@@ -82,6 +82,42 @@ class ExternalAuthCallback(HTTPMethodView):
         # Get email from decoded token
         email = decoded["email"]
 
+        # Get domain from email
+        domain = email.split("@")[1]
+
+        # Hard domain check for student email
+        if domain != "learner.manipal.edu":
+            # Check for faculty email
+            if domain != "manipal.edu":
+                # Invalid email
+                return json(
+                    {
+                        "authenticated": False,
+                        "message": "Invalid email domain",
+                    },
+                    status=401,
+                )
+            # Faculty email found
+            # Payload for JWT
+            payload = {
+                "name": decoded["name"],
+                "email": decoded["email"],
+            }
+            # Calculate Validity of JWT
+            valitidy = 7 * 24 * 60
+            # Generate JWT
+            token = await utils.generate_jwt(
+                request.app, payload, validity=valitidy, target="faculty"
+            )
+            # Return JWT
+            return json(
+                {
+                    "authenticated": True,
+                    "token": token,
+                },
+                status=200,
+            )
+
         # Covert to interal UUID
         uuid = email.split("@")[0]
 
@@ -91,14 +127,27 @@ class ExternalAuthCallback(HTTPMethodView):
         student = await collection.find_one({"email": uuid})
 
         if student is None:
-            # Student not found
-            return json(
-                {
-                    "authenticated": False,
-                    "message": "Student not found",
-                },
-                status=401,
+            # Generate a temp JWT for signups
+            payload = {
+                "email": email,
+            }
+
+            # Generate JWT for signup
+            token = await utils.generate_jwt(
+                request.app, payload, validity=30, target="signup"
             )
+
+            # Redirect to signup
+            return redirect(f"https://portal.mitblr.club/signup?token={token}")
+
+            # Student not found
+            # return json(
+            #     {
+            #         "authenticated": False,
+            #         "message": "Student not found",
+            #     },
+            #     status=401,
+            # )
         else:
             # Student found
             # Generate JWT
@@ -112,7 +161,9 @@ class ExternalAuthCallback(HTTPMethodView):
             valitidy = 30 * 24 * 60
 
             # Generate JWT
-            token = utils.generate_jwt(request.app, payload, validity=valitidy)
+            token = await utils.generate_jwt(
+                request.app, payload, validity=valitidy, target="student"
+            )
 
             # Return JWT
             return json(
