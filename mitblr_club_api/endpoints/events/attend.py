@@ -52,9 +52,9 @@ class EventsAttend(HTTPMethodView):
                 status=404,
             )
 
-        for event in student.events:
-            if event.event_id == event["_id"]:
-                if event.attended:
+        for s_event in student.events:
+            if event.id == s_event["event_id"]:
+                if s_event.attended:
                     return json(
                         {
                             "status": 200,
@@ -70,6 +70,15 @@ class EventsAttend(HTTPMethodView):
                         },
                         status=404,
                     )
+
+        return json(
+            {
+                "status": 404,
+                "error": "Not Found",
+                "message": "Student did not register / signup the event.",
+            },
+            status=404,
+        )
 
     # TODO: Data validation.
     @authorized_incls

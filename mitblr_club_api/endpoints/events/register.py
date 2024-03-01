@@ -135,7 +135,7 @@ class EventsRegister(HTTPMethodView):
 
         # Update registered students in event collection
         await events.update_one(
-            {"_id": event._id},
+            {"_id": event.id},
             {"$push": {"participants.registered": ObjectId(student._id)}},
         )
 

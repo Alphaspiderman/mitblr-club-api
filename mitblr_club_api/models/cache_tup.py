@@ -179,6 +179,7 @@ class Cache:
 
             if event_doc:
                 logger.debug(f"Cache Miss - Event - {event_id}")
+                event_doc["id"] = event_doc["_id"]
                 event = EventCache(**event_doc)
                 self._event_cache[event_id] = event
             else:
