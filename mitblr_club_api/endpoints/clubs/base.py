@@ -6,7 +6,7 @@ from sanic import Request, json
 from sanic.views import HTTPMethodView
 from sanic_ext import validate
 
-from mitblr_club_api.decorators.authorized import authorized_incls
+from mitblr_club_api.decorators.authorized import authorized
 from mitblr_club_api.models.cached.clubs import ClubCache
 from mitblr_club_api.models.request.club import ClubRequest
 
@@ -14,7 +14,7 @@ MAX_LENGTH = 100
 
 
 class Clubs(HTTPMethodView):
-    @authorized_incls
+    @authorized()
     async def get(self, request: Request, club_slug: Optional[str]):
         """
         Get the club information given its slug. If the slug is empty, get the information of every club.
@@ -69,7 +69,7 @@ class Clubs(HTTPMethodView):
                 }
             )
 
-    @authorized_incls
+    @authorized()
     @validate(json=ClubRequest)
     async def post(self, request: Request, body: ClubRequest, club_slug: Optional[str]):
         """

@@ -9,7 +9,7 @@ from sanic.response import json
 from sanic.views import HTTPMethodView
 from sanic_ext import validate
 
-from mitblr_club_api.decorators.authorized import authorized_incls
+from mitblr_club_api.decorators.authorized import authorized
 from mitblr_club_api.models.cached.students import StudentCache
 from mitblr_club_api.models.request.student import StudentRequest
 
@@ -17,7 +17,7 @@ from mitblr_club_api.models.request.student import StudentRequest
 class Students(HTTPMethodView):
     """Endpoints regarding students."""
 
-    @authorized_incls
+    @authorized()
     async def get(self, request: Request, uuid: int):
         """
         Check if a student with given UUID exists in the database.
@@ -45,7 +45,7 @@ class Students(HTTPMethodView):
 
         return json(data)
 
-    @authorized_incls
+    @authorized()
     @validate(json=StudentRequest)
     async def post(self, request: Request, body: StudentRequest, uuid: str):
         """
@@ -99,6 +99,6 @@ class Students(HTTPMethodView):
         return json(data)
 
     # TODO - Scope Check
-    @authorized_incls
+    @authorized()
     async def patch(self, request: Request, uuid: str):
         ...

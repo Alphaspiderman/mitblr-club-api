@@ -7,7 +7,7 @@ from sanic.views import HTTPMethodView
 from sanic_ext import validate
 from motor.motor_asyncio import AsyncIOMotorCollection
 
-from mitblr_club_api.decorators.authorized import authorized_incls
+from mitblr_club_api.decorators.authorized import authorized
 from mitblr_club_api.models.request.team import ClubTeamRequest
 from mitblr_club_api.models.enums.core_committee import CoreCommittee
 
@@ -17,7 +17,7 @@ MAX_LENGTH = 100
 class ClubsCore(HTTPMethodView):
     """Endpoints regarding core committee of clubs."""
 
-    @authorized_incls
+    @authorized()
     async def get(self, request: Request, club_slug: str):
         """Get Club's core committee."""
 
@@ -55,7 +55,7 @@ class ClubsCore(HTTPMethodView):
 
     # TODO - Data Validation
     # TODO - Authentication
-    @authorized_incls
+    @authorized()
     @validate(json=ClubTeamRequest)
     async def post(
         self, request: Request, body: ClubTeamRequest, club_slug: Optional[str]

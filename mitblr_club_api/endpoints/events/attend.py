@@ -4,7 +4,7 @@ from sanic.request import Request
 from sanic.response import json
 from sanic.views import HTTPMethodView
 
-from mitblr_club_api.decorators.authorized import authorized_incls
+from mitblr_club_api.decorators.authorized import authorized
 from mitblr_club_api.models.cached.events import EventCache
 from mitblr_club_api.models.cached.students import StudentCache
 from mitblr_club_api.models.internal.students import Student
@@ -13,7 +13,7 @@ from mitblr_club_api.models.internal.students import Student
 class EventsAttend(HTTPMethodView):
     """Endpoints regarding event attendance."""
 
-    @authorized_incls
+    @authorized()
     async def get(self, request: Request, slug: str, uuid: int):
         """
         Get a response that given an event slug and student application number, returns if the student is
@@ -76,7 +76,7 @@ class EventsAttend(HTTPMethodView):
         )
 
     # TODO: Data validation.
-    @authorized_incls
+    @authorized()
     async def post(self, request: Request, slug: str, uuid: int):
         """
         Mark the attendance of an event attendee with an event slug and student application number.
@@ -146,11 +146,11 @@ class EventsAttend(HTTPMethodView):
 
     # TODO - Data Validation
     # TODO - Scope Check (Club Core / Operations Lead)
-    @authorized_incls
+    @authorized()
     async def patch(self, request: Request, slug: str, uuid: int):
         """Update Attendance of attendee"""
 
     # TODO - Scope Check (Operations Lead)
-    @authorized_incls
+    @authorized()
     async def delete(self, request: Request, slug: str, uuid: int):
         """Deletion of Events"""

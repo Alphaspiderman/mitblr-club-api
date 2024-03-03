@@ -1,5 +1,4 @@
 """API endpoints for internal authentication provider."""
-from urllib import response
 import bcrypt
 from sanic import Request, json
 from sanic.views import HTTPMethodView
@@ -64,7 +63,10 @@ class InternalAuth(HTTPMethodView):
                 }
 
                 jwt_ = await generate_jwt(
-                    app=request.app, data=jwt_data, validity=90, target="external"
+                    app=request.app,
+                    data=jwt_data,
+                    validity=90,
+                    target="external",
                 )
                 json_payload = {"identifier": jwt_, "authenticated": True}
 
@@ -81,7 +83,7 @@ class InternalAuth(HTTPMethodView):
 
                 status = 401
 
-            return response.json(json_payload, status=status)
+            return json(json_payload, status=status)
 
         if body.auth_type == "AUTOMATION":
             app_id = body.identifier
@@ -102,4 +104,4 @@ class InternalAuth(HTTPMethodView):
             else:
                 json_payload = {"identifier": app_id, "authenticated": False}
 
-            return response.json(json_payload)
+            return json(json_payload)

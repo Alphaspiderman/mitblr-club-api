@@ -7,21 +7,21 @@ from sanic.response import json
 from sanic.views import HTTPMethodView
 from sanic_ext import validate
 
-from mitblr_club_api.decorators.authorized import authorized_incls
+from mitblr_club_api.decorators.authorized import authorized
 from mitblr_club_api.models.request.events import EventRequest
 
 
 class ClubEvents(HTTPMethodView):
     """Endpoints regarding events from the club."""
 
-    @authorized_incls
+    @authorized()
     async def get(self, request: Request, club_slug: str, event_slug: Optional[str]):
         """Get Events from the Club"""
 
     # TODO - Check valid Club Slug
     # TODO - Check JWT Scope for Club
     # TODO - Check JWT for creation permissions
-    @authorized_incls
+    @authorized()
     @validate(json=EventRequest)
     async def post(
         self,
