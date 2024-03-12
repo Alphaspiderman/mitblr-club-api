@@ -87,7 +87,7 @@ class Students(HTTPMethodView):
             return json(data, status=409)
 
         student: dict[str, Any] = {
-            "application_number": str(body.application_number),
+            "application_number": body.application_number,
             "email": body.email,
             "institution": body.institution,
             "academic": {
