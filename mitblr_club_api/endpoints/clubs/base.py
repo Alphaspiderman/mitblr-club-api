@@ -90,6 +90,16 @@ class Clubs(HTTPMethodView):
 
         club: ClubCache = await request.app.ctx.cache.get_club(body.slug)
 
+        if club:
+            return json(
+                {
+                    "status": 409,
+                    "error": "Conflict",
+                    "message": "Object already exists.",
+                },
+                status=409,
+            )
+
         # Making a new list to enter only the required fields into the faculty_advisors field.
         faculty_advisors = list()
         for faculty in body.faculty_advisors:
@@ -113,6 +123,7 @@ class Clubs(HTTPMethodView):
                 "core_committee": {},
                 "events": {},
                 "operations": [],
+                "team": [],
             }
 
             result = await collection.insert_one(club)

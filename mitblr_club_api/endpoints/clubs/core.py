@@ -91,7 +91,7 @@ class ClubsCore(HTTPMethodView):
                 {
                     "status": 409,
                     "error": "Conflict",
-                    "message": "Student already exists in club_teams collection.",
+                    "message": "Student already exists in club.",
                 },
                 status=409,
             )
