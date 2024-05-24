@@ -7,7 +7,6 @@ from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorCollection
 from sanic.log import logger
 
-from mitblr_club_api.endpoints import MAX_LENGTH
 from mitblr_club_api.models.exceptions import ClubTeamNotFoundException
 from mitblr_club_api.models.internal.team import Team
 
@@ -43,7 +42,7 @@ async def check_permission(
     :rtype: bool
     """
 
-    club_teams = await collection.find({"student_id": student_id}).to_list(MAX_LENGTH)
+    club_teams = await collection.find({"student_id": student_id}).to_list(length=5)
 
     if len(club_teams) == 0:
         raise ClubTeamNotFoundException(

@@ -1,15 +1,15 @@
 """API endpoints for club core committees."""
 from typing import Optional
-from bson import ObjectId
 
+from bson import ObjectId
+from motor.motor_asyncio import AsyncIOMotorCollection
 from sanic import Request, json
 from sanic.views import HTTPMethodView
 from sanic_ext import validate
-from motor.motor_asyncio import AsyncIOMotorCollection
 
 from mitblr_club_api.decorators.authorized import authorized_incls
-from mitblr_club_api.models.internal.team import ClubTeam_Create
 from mitblr_club_api.models.enums.core_committee import CoreCommittee
+from mitblr_club_api.models.request.team import ClubTeamRequest
 
 MAX_LENGTH = 100
 
@@ -56,9 +56,9 @@ class ClubsCore(HTTPMethodView):
     # TODO - Data Validation
     # TODO - Authentication
     @authorized_incls
-    @validate(json=ClubTeam_Create)
+    @validate(json=ClubTeamRequest)
     async def post(
-        self, request: Request, body: ClubTeam_Create, club_slug: Optional[str]
+        self, request: Request, body: ClubTeamRequest, club_slug: Optional[str]
     ):
         """Add core committee member to the club."""
 
@@ -91,7 +91,7 @@ class ClubsCore(HTTPMethodView):
                 {
                     "status": 409,
                     "error": "Conflict",
-                    "message": "Student already exists in club_teams collection.",
+                    "message": "Student already exists in club.",
                 },
                 status=409,
             )

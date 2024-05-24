@@ -1,15 +1,16 @@
 """API endpoints for students."""
 
-from typing import Any
+from typing import Any, Union
 
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 from sanic.request import Request
-from sanic.response import JSONResponse, json
+from sanic.response import json
 from sanic.views import HTTPMethodView
 from sanic_ext import validate
 
 from mitblr_club_api.decorators.authorized import authorized_incls
+from mitblr_club_api.models.internal.students import Student
 from mitblr_club_api.models.request.student import StudentRequest
 
 
@@ -17,7 +18,7 @@ class Students(HTTPMethodView):
     """Endpoints regarding students."""
 
     @authorized_incls
-    async def get(self, request: Request, uuid: int):
+    async def get(self, request: Request, uuid: Union[int, str]):
         """
         Check if a student with given UUID exists in the database.
 
@@ -31,11 +32,7 @@ class Students(HTTPMethodView):
         :rtype: JSONResponse
         """
 
-        collection: AsyncIOMotorClient = request.app.ctx.db["students"]
-
-        student = await collection.find_one(
-            {"$or": [{"application_number": uuid}, {"registration_number": uuid}]}
-        )
+        student: Student = await request.app.ctx.cache.get_student(uuid)
 
         data: dict[str, bool | str]
         if student is None:
@@ -43,14 +40,14 @@ class Students(HTTPMethodView):
         else:
             data = {
                 "exists": True,
-                "uuid": student["application_number"],
+                "uuid": student.email,
             }
 
         return json(data)
 
     @authorized_incls
     @validate(json=StudentRequest)
-    async def post(self, request: Request, body: StudentRequest, uuid: str):
+    async def post(self, request: Request, body: StudentRequest, uuid: Union[int, str]):
         """
         Create a student in the database using Python models.
 
@@ -69,8 +66,15 @@ class Students(HTTPMethodView):
 
         collection: AsyncIOMotorClient = request.app.ctx.db["students"]
 
+        # Lookup student by email, registration number, or application number
         student = await collection.find_one(
-            {"application_number": body.application_number}
+            {
+                "$or": [
+                    {"application_number": body.application_number},
+                    {"registration_number": body.registration_number},
+                    {"email": body.email},
+                ]
+            }
         )
 
         if student is not None:
@@ -83,7 +87,7 @@ class Students(HTTPMethodView):
             return json(data, status=409)
 
         student: dict[str, Any] = {
-            "application_number": str(body.application_number),
+            "application_number": body.application_number,
             "email": body.email,
             "institution": body.institution,
             "academic": {
@@ -93,9 +97,9 @@ class Students(HTTPMethodView):
             "phone_number": body.phone_number,
             "registration_number": body.registration_number,
             "clubs": [ObjectId(id_) for id_ in body.clubs],
+            "events": [],
             "name": body.name,
             "mess_provider": body.mess_provider.value,
-            "events": [],
         }
 
         result = await collection.insert_one(student)

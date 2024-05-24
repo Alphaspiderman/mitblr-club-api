@@ -11,7 +11,7 @@ class Student(BaseModel):
     application_number: int
     clubs: list[ObjectId]
     email: str
-    events: dict[str, ObjectId]
+    events: list
     institution: str
     mess_provider: MessProvider
     name: str

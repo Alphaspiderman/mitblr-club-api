@@ -5,7 +5,7 @@ from bson import ObjectId
 from pydantic import BaseModel
 
 
-class Team(BaseModel):
+class TeamCache(BaseModel):
     """
     ClubTeam document model.
     """

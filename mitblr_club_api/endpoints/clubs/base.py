@@ -7,8 +7,7 @@ from sanic.views import HTTPMethodView
 from sanic_ext import validate
 
 from mitblr_club_api.decorators.authorized import authorized_incls
-
-# from mitblr_club_api.endpoints import MAX_LENGTH
+from mitblr_club_api.models.cached.clubs import ClubCache
 from mitblr_club_api.models.request.club import ClubRequest
 
 MAX_LENGTH = 100
@@ -29,11 +28,9 @@ class Clubs(HTTPMethodView):
         :rtype: JSONResponse
         """
 
-        collection: AsyncIOMotorCollection = request.app.ctx.db["clubs"]
-
         if club_slug == "":
             # Get all clubs.
-            clubs = await collection.find({}).to_list(length=MAX_LENGTH)
+            clubs: list[ClubCache] = request.app.ctx.cache.get_clubs()
 
             if clubs is None:
                 return json(
@@ -43,10 +40,10 @@ class Clubs(HTTPMethodView):
 
             club_list = [
                 {
-                    "club": club["name"],
-                    "slug": club["slug"],
-                    "unit": club["unit_type"],
-                    "institution": club["institution"],
+                    "club": club.name,
+                    "slug": club.slug,
+                    "unit": club.unit_type.name,
+                    "institution": club.institution,
                 }
                 for club in clubs
             ]
@@ -55,7 +52,7 @@ class Clubs(HTTPMethodView):
 
         else:
             # Get a specific club.
-            club = await collection.find_one({"slug": club_slug})
+            club: ClubCache = await request.app.ctx.cache.get_club(club_slug)
 
             if not club:
                 return json(
@@ -65,10 +62,10 @@ class Clubs(HTTPMethodView):
 
             return json(
                 {
-                    "club": club["name"],
-                    "slug": club["slug"],
-                    "unit": club["unit_type"],
-                    "institution": club["institution"],
+                    "club": club.name,
+                    "slug": club.slug,
+                    "unit": club.unit_type.name,
+                    "institution": club.institution,
                 }
             )
 
@@ -91,7 +88,17 @@ class Clubs(HTTPMethodView):
 
         collection: AsyncIOMotorCollection = request.app.ctx.db["clubs"]
 
-        club = await collection.find_one({"slug": body.slug})
+        club: ClubCache = await request.app.ctx.cache.get_club(body.slug)
+
+        if club:
+            return json(
+                {
+                    "status": 409,
+                    "error": "Conflict",
+                    "message": "Object already exists.",
+                },
+                status=409,
+            )
 
         # Making a new list to enter only the required fields into the faculty_advisors field.
         faculty_advisors = list()
@@ -116,6 +123,7 @@ class Clubs(HTTPMethodView):
                 "core_committee": {},
                 "events": {},
                 "operations": [],
+                "team": [],
             }
 
             result = await collection.insert_one(club)

@@ -1,12 +1,15 @@
 """API endpoints for events registrations."""
+from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
 from sanic.request import Request
-from sanic.response import JSONResponse, json
+from sanic.response import json
 from sanic.views import HTTPMethodView
 
-from mitblr_club_api.decorators.authorized import authorized_incls
+# from sanic.log import logger
 
-from bson import ObjectId
+from mitblr_club_api.decorators.authorized import authorized_incls
+from mitblr_club_api.models.cached.events import EventCache
+from mitblr_club_api.models.internal.students import Student
 
 
 class EventsRegister(HTTPMethodView):
@@ -31,12 +34,7 @@ class EventsRegister(HTTPMethodView):
         :rtype: JSONResponse
         """
 
-        year = request.app.config["SORT_YEAR"]
-
-        students = request.app.ctx.db["students"]
-        events = request.app.ctx.db["events"]
-
-        event = await events.find_one({"slug": slug, "sort_year": year})
+        event: EventCache = await request.app.ctx.cache.get_event(slug)
 
         if not event:
             return json(
@@ -44,7 +42,7 @@ class EventsRegister(HTTPMethodView):
                 status=404,
             )
 
-        student = await students.find_one({"application_number": uuid}, {"events": 1})
+        student: Student = await request.app.ctx.cache.get_student(student_id=uuid)
 
         if not student:
             return json(
@@ -52,8 +50,8 @@ class EventsRegister(HTTPMethodView):
                 status=404,
             )
 
-        for student_event in student["events"]:
-            if student_event["event_id"] == event["_id"]:
+        for student_event in student.events:
+            if student_event["event_id"] == event.id:
                 return json(
                     {"status": 200, "message": "Student is registered for the event."}
                 )
@@ -86,12 +84,10 @@ class EventsRegister(HTTPMethodView):
         :rtype: JSONResponse
         """
 
-        year = request.app.config["SORT_YEAR"]
-
         students: AsyncIOMotorClient = request.app.ctx.db["students"]
         events: AsyncIOMotorClient = request.app.ctx.db["events"]
 
-        event = await events.find_one({"slug": slug, "sort_year": year})
+        event: EventCache = await request.app.ctx.cache.get_event(slug)
 
         # Check if event exists
         if not event:
@@ -100,7 +96,7 @@ class EventsRegister(HTTPMethodView):
                 status=404,
             )
 
-        student = await students.find_one({"application_number": uuid}, {"events": 1})
+        student: Student = await request.app.ctx.cache.get_student(student_id=uuid)
 
         # Check if student exists
         if not student:
@@ -110,8 +106,8 @@ class EventsRegister(HTTPMethodView):
             )
 
         # Check if student is already registered
-        for student_event in student["events"]:
-            if student_event["event_id"] == event["_id"]:
+        for student_event in student.events:
+            if student_event["event_id"] == event.id:
                 return json(
                     {
                         "status": 200,
@@ -125,7 +121,7 @@ class EventsRegister(HTTPMethodView):
             {
                 "$push": {
                     "events": {
-                        "event_id": event["_id"],
+                        "event_id": event.id,
                         "registration": "time",
                         "sort_year:": request.app.config["SORT_YEAR"],
                         "attended": False,
@@ -134,10 +130,13 @@ class EventsRegister(HTTPMethodView):
             },
         )
 
+        # Refresh student cache
+        await request.app.ctx.cache.fetch_student(uuid)
+
         # Update registered students in event collection
         await events.update_one(
-            {"_id": event["_id"]},
-            {"$push": {"participants.registered": ObjectId(student["_id"])}},
+            {"_id": event.id},
+            {"$push": {"participants.registered": ObjectId(student._id)}},
         )
 
         return json(

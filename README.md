@@ -14,6 +14,7 @@ Make sure to set the following environment variables in your `.env` file:
 - `SORT_YEAR`: Used to categorise events by academic year. This is the year in which the academic year starts. For
   example, if the academic year starts in July 2023, then this value should be set to 2023.
 - `HOST`: Used to add information about where the JWT was issued from, in case of multiple API instances.
+- `PROXIES_COUNT`: Used to set the number of trusted proxies in the connection
 
 In addition to the above, you will also need a public and private RSA key pair to sign and verify JWTs. The public key
 will be used to verify the JWTs, and the private key will be used to sign them. The keys should be stored in the

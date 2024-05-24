@@ -8,8 +8,11 @@ from sanic.log import logger
 from sanic_ext import validate
 
 from .app import appserver
+from .models.cache_tup import Cache
 from .models.request.login import Login
 from .utils import generate_jwt
+from .models.internal.team import Team
+from .utils import tasks
 
 # noinspection PyUnresolvedReferences
 # flake8: noqa
@@ -34,6 +37,7 @@ config.update({"IS_PROD": is_prod.lower() == "true"})
 
 app: Sanic = appserver
 app.config.update(config)
+app.config.PROXIES_COUNT = int(config.get("PROXIES_COUNT", 0))
 
 
 @app.listener("before_server_start")
@@ -69,6 +73,9 @@ async def register_db(app: Sanic):
     else:
         logger.info("Connected to DEV ENV")
         app.ctx.db = client["mitblr-club-dev"]
+
+    app.ctx.cache = Cache(app.ctx.db, sort_year=app.config["SORT_YEAR"])
+    ensure_cache.start(app)
 
 
 @app.listener("after_server_stop")
@@ -178,6 +185,9 @@ async def login(request: Request, body: Login):
             jwt_ = await generate_jwt(app=request.app, data=jwt_data, validity=90)
             json_payload = {"identifier": jwt_, "authenticated": True}
 
+            # Fetch and cache team data.
+            await request.app.ctx.cache.fetch_team(jwt_data["team_id"])
+
         else:
             # If not verified, return error.
             json_payload = {
@@ -206,6 +216,16 @@ async def login(request: Request, body: Login):
             json_payload = {"identifier": app_id, "authenticated": False}
 
         return response.json(json_payload)
+
+
+@tasks.loop(hours=3)
+async def ensure_cache(app: Sanic):
+    """Task that runs each hour to ensure cache is populated with Events and Clubs"""
+    logger.info("Task running")
+    cache: Cache = app.ctx.cache
+
+    await cache.refresh_events()
+    await cache.refresh_clubs()
 
 
 if __name__ == "__main__":
