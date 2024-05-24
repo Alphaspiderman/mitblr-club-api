@@ -5,6 +5,28 @@ An API to interface with the backend database containing information for operati
 We strongly recommend that clubs contribute to the repository with the features (as issues or PRs) they require instead
 of forking and hosting a custom instance as it will lead to fragmentation.
 
+## Environment Variables
+
+Make sure to set the following environment variables in your `.env` file:
+
+- `MONGO_CONNECTION_URI`: The connection URI for the MongoDB server.
+- `IS_PROD`: Determines the database connection and toggles `auto-reload` and `debug` in Sanic.
+- `SORT_YEAR`: Used to categorise events by academic year. This is the year in which the academic year starts. For
+  example, if the academic year starts in July 2023, then this value should be set to 2023.
+- `HOST`: Used to add information about where the JWT was issued from, in case of multiple API instances.
+- `PROXIES_COUNT`: Used to set the number of trusted proxies in the connection
+
+In addition to the above, you will also need a public and private RSA key pair to sign and verify JWTs. The public key
+will be used to verify the JWTs, and the private key will be used to sign them. The keys should be stored in the
+project directory as `public-key.pem` and `private-key.pem` respectively.
+
+It is to be noted that, in production, the private key should be kept secret and should not be shared with anyone. The
+public key, however, can be shared with anyone who needs to verify the JWTs. Rotating the keys will lead to all existing JWTs becoming invalid.
+
+For more information related to MongoDB Connection URIs, refer to the
+[MongoDB Documentation](https://docs.mongodb.com/manual/reference/connection-string/).
+
+
 ## Getting Started (Running Locally)
 
 ### Prerequisites
@@ -43,21 +65,15 @@ poetry install
 
 Following the descriptions provided in the "Environment Variables" section set up the `.env` file.
 
+### Generate a Public and Private RSA Key Pair
+
+Generate a public and private RSA key pair if necessary.
+
 ### Start the server
 
 ```bash
   poetry run task server
 ```
-
-## Environment Variables
-
-Make sure to set the following environment variables in your `.env` file:
-
-- `MONGO_CONNECTION_URI`: The connection URI for the MongoDB server.
-- `IS_PROD`: Determines the database connection and toggles `auto-reload` and `debug` in Sanic.
-- `SORT_YEAR`: Sets the sorting year for event documents in the database.
-- `HOST`: Used to add information about where the JWT was issued from, in case of multiple API instances.
-- `PROXIES_COUNT`: Used to set the number of trusted proxies in the connection
 
 ## Deployment (Production)
 
@@ -85,7 +101,7 @@ docker build . -t clubapi
 
 ### Configure the ENV File
 
-Create and configure your `.env` file.
+Following the descriptions provided in the "Environment Variables" section set up the `.env` file.
 
 ### Generate a Public and Private RSA Key Pair
 
