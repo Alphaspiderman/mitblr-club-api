@@ -1,4 +1,8 @@
-# MIT-BLR Club API
+# ⚠️ This Repository is NO LONGER MAINTAINED
+
+Due to major changes to the project scope and objectives set forward by the University, this variant of the API is no longer required by the project. Related aspects of this project are to be covered by an application developed by the University.
+
+# mitblr.club API
 
 An API to interface with the backend database containing information for operating the club ecosystem
 
@@ -38,7 +42,7 @@ For more information related to MongoDB Connection URIs, refer to the
 ### Clone the Project
 
 ```bash
-git clone https://github.com/Alphaspiderman/mitblr-club-api.git
+git clone https://github.com/mitblr-club/api.git
 ```
 
 ### Navigate to the Project Directory
@@ -84,7 +88,7 @@ To deploy this project to production, follow these steps:
 ### Clone the Project
 
 ```bash
-git clone https://github.com/Alphaspiderman/mitblr-club-api.git
+git clone https://github.com/mitblr-club/api.git
 ```
 
 ### Navigate to the Project Directory
